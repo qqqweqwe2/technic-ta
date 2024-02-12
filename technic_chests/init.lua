@@ -1,82 +1,82 @@
-
-local S = minetest.get_translator(minetest.get_current_modname())
+-- Minetest 0.4.6 mod: technic_chests
+-- namespace: technic
+-- (c) 2012-2013 by RealBadAngel <mk@realbadangel.pl>
 
 local modpath = minetest.get_modpath("technic_chests")
 
 technic = rawget(_G, "technic") or {}
 technic.chests = {}
 
-technic.chests.colors = {
-	{"black", S("Black")},
-	{"blue", S("Blue")},
-	{"brown", S("Brown")},
-	{"cyan", S("Cyan")},
-	{"dark_green", S("Dark Green")},
-	{"dark_grey", S("Dark Grey")},
-	{"green", S("Green")},
-	{"grey", S("Grey")},
-	{"magenta", S("Magenta")},
-	{"orange", S("Orange")},
-	{"pink", S("Pink")},
-	{"red", S("Red")},
-	{"violet", S("Violet")},
-	{"white", S("White")},
-	{"yellow", S("Yellow")},
-}
-
-function technic.chests.change_allowed(pos, player, owned, protected)
-	if owned then
-		if minetest.is_player(player) and not default.can_interact_with_node(player, pos) then
-			return false
-		end
-	elseif protected then
-		if minetest.is_protected(pos, player:get_player_name()) then
-			return false
-		end
-	end
-	return true
-end
-
-if minetest.get_modpath("digilines") then
-	dofile(modpath.."/digilines.lua")
-end
-
-dofile(modpath.."/formspec.lua")
-dofile(modpath.."/inventory.lua")
+dofile(modpath.."/common.lua")
 dofile(modpath.."/register.lua")
-dofile(modpath.."/chests.lua")
+dofile(modpath.."/iron_chest.lua")
+dofile(modpath.."/copper_chest.lua")
+dofile(modpath.."/silver_chest.lua")
+dofile(modpath.."/gold_chest.lua")
+dofile(modpath.."/mithril_chest.lua")
 
--- Undo all of the locked wooden chest recipes, and just make them use a padlock.
-minetest.register_on_mods_loaded(function()
-	minetest.clear_craft({output = "default:chest_locked"})
-	minetest.register_craft({
-		output = "default:chest_locked",
-		recipe = {
-			{ "group:wood", "group:wood", "group:wood" },
-			{ "group:wood", "basic_materials:padlock", "group:wood" },
-			{ "group:wood", "group:wood", "group:wood" }
-		}
-	})
-	minetest.register_craft({
-		output = "default:chest_locked",
+-- undo all of the locked wooden chest recipes created by default and
+-- moreblocks, and just make them use a padlock.
+
+if minetest.get_modpath("moreblocks") then
+	minetest.clear_craft({
 		type = "shapeless",
 		recipe = {
 			"default:chest",
-			"basic_materials:padlock"
+			"default:gold_ingot",
 		}
 	})
-end)
 
--- Conversion for old chests
+	minetest.clear_craft({
+		type = "shapeless",
+		recipe = {
+			"default:chest",
+			"default:bronze_ingot",
+		}
+	})
+
+	minetest.clear_craft({
+		type = "shapeless",
+		recipe = {
+			"default:chest",
+			"default:copper_ingot",
+		}
+	})
+end
+
+minetest.clear_craft({
+	type = "shapeless",
+	recipe = {
+		"default:chest",
+		"default:steel_ingot",
+	}
+})
+
+minetest.clear_craft({output = "default:chest_locked"})
+
+minetest.register_craft({
+	output = "default:chest_locked",
+	recipe = {
+		{ "group:wood", "group:wood", "group:wood" },
+		{ "group:wood", "basic_materials:padlock", "group:wood" },
+		{ "group:wood", "group:wood", "group:wood" }
+	}
+})
+
+minetest.register_craft({
+	output = "default:chest_locked",
+	type = "shapeless",
+	recipe = {
+		"default:chest",
+		"basic_materials:padlock"
+	}
+})
+
 minetest.register_lbm({
-	name = "technic_chests:old_chest_conversion",
-	nodenames = {"group:technic_chest"},
-	run_at_every_load = false,
+	name = "technic_chests:fix_wooden_chests",
+	nodenames = {"default:chest"},
 	action = function(pos, node)
-		-- Use `on_construct` function because that has data from register function
-		local def = minetest.registered_nodes[node.name]
-		if def and def.on_construct then
-			def.on_construct(pos)
-		end
-	end,
+		local meta = minetest.get_meta(pos)
+		meta:set_string("formspec", "")
+	end
 })

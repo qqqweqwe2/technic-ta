@@ -1,6 +1,49 @@
 -- Minetest 0.4.6 mod: extranodes
 -- namespace: technic
-local S = minetest.get_translator(minetest.get_current_modname())
+-- Boilerplate to support localized strings if intllib mod is installed.
+local S = rawget(_G, "intllib") and intllib.Getter() or function(s) return s end
+
+local path = minetest.get_modpath("extranodes")
+
+-----------------------------------------------------------------------------------------
+--                           Introducing Extra Stuff
+-----------------------------------------------------------------------------------------
+dofile(path.."/aspirin.lua")
+dofile(path.."/trampoline.lua")
+dofile(path.."/extratubes.lua")
+dofile(path.."/extramesecons.lua")
+--dofile(path.."/lox.lua")
+dofile(path.."/plastic_block.lua")
+--dofile(path.."/diamonds.lua")
+dofile(path.."/insulator_clips.lua")
+dofile(path.."/cottonseed_oil.lua")
+
+if minetest.get_modpath("ethereal") and minetest.get_modpath("flowers") then
+	dofile(path.."/antishroom.lua")
+end
+
+
+-----------------------------------------------------------------------------------------
+--                           Compatibility Stuff and Co
+-----------------------------------------------------------------------------------------
+
+if minetest.get_modpath("bakedclay") then
+	-- bring back them sticks
+	minetest.register_craft( {
+		type = "shapeless",
+		output = "default:stick",
+		recipe = {"default:dry_shrub"}
+	})
+end
+
+-- register procedurally-generated arcs
+if minetest.get_modpath("pkarcs") then
+	pkarcs.register_node("technic:marble")
+	pkarcs.register_node("technic:marble_bricks")
+	if technic.config:get_bool("enable_granite_generation") then
+		pkarcs.register_node(technic.extranodes.granite)
+	end
+end
 
 if minetest.get_modpath("moreblocks") then
 
@@ -20,19 +63,20 @@ if minetest.get_modpath("moreblocks") then
 		tiles={"technic_marble_bricks.png"},
 	})
 
-	stairsplus:register_all("technic", "granite", "technic:granite", {
-		description=S("Granite"),
-		groups={cracky=1, not_in_creative_inventory=1},
-		tiles={"technic_granite.png"},
-	})
+	if technic.config:get_bool("enable_granite_generation") then
+		stairsplus:register_all("technic", "granite", technic.extranodes.granite, {
+			description = S("Granite"),
+			groups = { cracky = 1, not_in_creative_inventory = 1 },
+			tiles = { "technic_granite.png" },
+		})
 
-	stairsplus:register_all("technic", "granite_bricks", "technic:granite_bricks", {
-		description=S("Granite Bricks"),
-		groups={cracky=1, not_in_creative_inventory=1},
-		tiles={"technic_granite_bricks.png"},
-	})
-
-	stairsplus:register_all("technic", "concrete", "basic_materials:concrete_block", {
+		stairsplus:register_all("technic", "granite_bricks", "technic:granite_bricks", {
+			description = S("Granite Bricks"),
+			groups = { cracky = 1, not_in_creative_inventory = 1 },
+			tiles = { "technic_granite_bricks.png" },
+		})
+	end
+	stairsplus:register_all("technic", "concrete", "technic:concrete", {
 		description=S("Concrete"),
 		groups={cracky=3, not_in_creative_inventory=1},
 		tiles={"basic_materials_concrete_block.png"},
@@ -62,74 +106,60 @@ if minetest.get_modpath("moreblocks") then
 		tiles={"technic_stainless_steel_block.png"},
 	})
 
-	stairsplus:register_all("technic", "blast_resistant_concrete", "technic:blast_resistant_concrete", {
-		description = S("Blast-resistant Concrete"),
-		tiles = {"technic_blast_resistant_concrete_block.png",},
-		groups = {cracky = 1, level = 3, concrete = 1},
-		on_blast = function(pos, intensity)
-			if intensity > 3 then
-				minetest.remove_node(pos)
-				minetest.add_item(pos, "technic:blast_resistant_concrete")
-			end
-		end
+	stairsplus:register_all("technic", "brass_block", "technic:brass_block", {
+		description=S("Brass Block"),
+		groups={cracky=1, not_in_creative_inventory=1},
+		tiles={"technic_brass_block.png"},
 	})
 
-	-- FIXME: Clean this function up somehow
-	local function register_technic_stairs_alias(modname, origname, newmod, newname)
-		minetest.register_alias(modname .. ":slab_" .. origname, newmod..":slab_" .. newname)
-		minetest.register_alias(modname .. ":slab_" .. origname ..
-								"_inverted", newmod..":slab_" .. newname .. "_inverted")
-		minetest.register_alias(modname .. ":slab_" .. origname .. "_wall", newmod..":slab_" .. newname .. "_wall")
-		minetest.register_alias(modname .. ":slab_" .. origname ..
-								"_quarter", newmod..":slab_" .. newname .. "_quarter")
-		minetest.register_alias(modname .. ":slab_" .. origname ..
-								"_quarter_inverted", newmod..":slab_" .. newname .. "_quarter_inverted")
-		minetest.register_alias(modname .. ":slab_" .. origname ..
-								"_quarter_wall", newmod..":slab_" .. newname .. "_quarter_wall")
-		minetest.register_alias(modname .. ":slab_" .. origname ..
-								"_three_quarter", newmod..":slab_" .. newname .. "_three_quarter")
-		minetest.register_alias(modname .. ":slab_" .. origname ..
-								"_three_quarter_inverted", newmod..":slab_" .. newname .. "_three_quarter_inverted")
-		minetest.register_alias(modname .. ":slab_" .. origname ..
-								"_three_quarter_wall", newmod..":slab_" .. newname .. "_three_quarter_wall")
-		minetest.register_alias(modname .. ":stair_" .. origname, newmod..":stair_" .. newname)
-		minetest.register_alias(modname .. ":stair_" .. origname ..
-								"_inverted", newmod..":stair_" .. newname .. "_inverted")
-		minetest.register_alias(modname .. ":stair_" .. origname .. "_wall", newmod..":stair_" .. newname .. "_wall")
-		minetest.register_alias(modname .. ":stair_" .. origname ..
-								"_wall_half", newmod..":stair_" .. newname .. "_wall_half")
-		minetest.register_alias(modname .. ":stair_" .. origname ..
-								"_wall_half_inverted", newmod..":stair_" .. newname .. "_wall_half_inverted")
-		minetest.register_alias(modname .. ":stair_" .. origname .. "_half", newmod..":stair_" .. newname .. "_half")
-		minetest.register_alias(modname .. ":stair_" .. origname ..
-								"_half_inverted", newmod..":stair_" .. newname .. "_half_inverted")
-		minetest.register_alias(modname .. ":stair_" .. origname ..
-								"_right_half", newmod..":stair_" .. newname .. "_right_half")
-		minetest.register_alias(modname .. ":stair_" .. origname ..
-								"_right_half_inverted", newmod..":stair_" .. newname .. "_right_half_inverted")
-		minetest.register_alias(modname .. ":stair_" .. origname ..
-								"_wall_half", newmod..":stair_" .. newname .. "_wall_half")
-		minetest.register_alias(modname .. ":stair_" .. origname ..
-								"_wall_half_inverted", newmod..":stair_" .. newname .. "_wall_half_inverted")
-		minetest.register_alias(modname .. ":stair_" .. origname .. "_inner", newmod..":stair_" .. newname .. "_inner")
-		minetest.register_alias(modname .. ":stair_" .. origname ..
-								"_inner_inverted", newmod..":stair_" .. newname .. "_inner_inverted")
-		minetest.register_alias(modname .. ":stair_" .. origname .. "_outer", newmod..":stair_" .. newname .. "_outer")
-		minetest.register_alias(modname .. ":stair_" .. origname ..
-								"_outer_inverted", newmod..":stair_" .. newname .. "_outer_inverted")
-		minetest.register_alias(modname .. ":panel_" .. origname ..
-								"_bottom", newmod..":panel_" .. newname .. "_bottom")
-		minetest.register_alias(modname .. ":panel_" .. origname .. "_top", newmod..":panel_" .. newname .. "_top")
-		minetest.register_alias(modname .. ":panel_" .. origname ..
-								"_vertical", newmod..":panel_" .. newname .. "_vertical")
-		minetest.register_alias(modname .. ":micro_" .. origname ..
-								"_bottom", newmod..":micro_" .. newname .. "_bottom")
-		minetest.register_alias(modname .. ":micro_" .. origname .. "_top", newmod..":micro_" .. newname .. "_top")
+	function register_technic_stairs_alias(origmod, origname, newmod, newname)
+		local func = minetest.register_alias
+		local function remap(kind, suffix)
+			-- Old: stairsplus:slab_concrete_wall
+			-- New:    technic:slab_concrete_wall
+			func(("%s:%s_%s%s"):format(origmod, kind, origname, suffix),
+				("%s:%s_%s%s"):format(newmod, kind, newname, suffix))
+		end
+
+		-- Slabs
+		remap("slab", "")
+		remap("slab", "_inverted")
+		remap("slab", "_wall")
+		remap("slab", "_quarter")
+		remap("slab", "_quarter_inverted")
+		remap("slab", "_quarter_wall")
+		remap("slab", "_three_quarter")
+		remap("slab", "_three_quarter_inverted")
+		remap("slab", "_three_quarter_wall")
+
+		-- Stairs
+		remap("stair", "")
+		remap("stair", "_inverted")
+		remap("stair", "_wall")
+		remap("stair", "_wall_half")
+		remap("stair", "_wall_half_inverted")
+		remap("stair", "_half")
+		remap("stair", "_half_inverted")
+		remap("stair", "_right_half")
+		remap("stair", "_right_half_inverted")
+		remap("stair", "_inner")
+		remap("stair", "_inner_inverted")
+		remap("stair", "_outer")
+		remap("stair", "_outer_inverted")
+
+		-- Other
+		remap("panel", "_bottom")
+		remap("panel", "_top")
+		remap("panel", "_vertical")
+		remap("micro", "_bottom")
+		remap("micro", "_top")
 	end
 
 	register_technic_stairs_alias("stairsplus", "concrete", "technic", "concrete")
 	register_technic_stairs_alias("stairsplus", "marble", "technic", "marble")
-	register_technic_stairs_alias("stairsplus", "granite", "technic", "granite")
+	if technic.config:get_bool("enable_granite_generation") then
+		register_technic_stairs_alias("stairsplus", "granite", "technic", "granite")
+	end
 	register_technic_stairs_alias("stairsplus", "marble_bricks", "technic", "marble_bricks")
 
 end
@@ -138,47 +168,45 @@ local iclip_def = {
 	description = S("Insulator/cable clip"),
 	drawtype = "mesh",
 	mesh = "technic_insulator_clip.obj",
-	tiles = {"technic_insulator_clip.png"},
-	paramtype = "light",
+	tiles = { "technic_insulator_clip.png" },
 	is_ground_content = false,
-	groups = {choppy=1, snappy=1, oddly_breakable_by_hand=1 },
+	groups = { choppy = 1, snappy = 1, oddly_breakable_by_hand = 1 },
 	sounds = default.node_sound_stone_defaults(),
 }
 
 local iclipfence_def = {
 	description = S("Insulator/cable clip"),
-	tiles = {"technic_insulator_clip.png"},
+	tiles = { "technic_insulator_clip.png" },
 	is_ground_content = false,
 	paramtype = "light",
 	drawtype = "nodebox",
 	node_box = {
 		type = "connected",
 		fixed = {
-			{ -0.25,   0.75,   -0.25,   0.25,   1.25,   0.25   }, -- the clip on top
-			{ -0.125, 0.6875, -0.125, 0.125, 0.75,   0.125 },
-			{ -0.1875,  0.625,  -0.1875,  0.1875,  0.6875, 0.1875  },
-			{ -0.125, 0.5625, -0.125, 0.125, 0.625,  0.125 },
-			{ -0.1875,  0.5,    -0.1875,  0.1875,  0.5625, 0.1875  },
-			{ -0.125, 0.4375, -0.125, 0.125, 0.5,    0.125 },
-			{ -0.1875,  0.375,  -0.1875,  0.1875,  0.4375, 0.1875  },
-			{ -0.125, -0.5,    -0.125,  0.125,  0.375,  0.125  }, -- the post, slightly short
+			{ -0.25,   0.75,   -0.25,   0.25,   1.25,   0.25 }, -- the clip on top
+			{ -0.125,  0.6875, -0.125,  0.125,  0.75,   0.125 },
+			{ -0.1875, 0.625,  -0.1875, 0.1875, 0.6875, 0.1875 },
+			{ -0.125,  0.5625, -0.125,  0.125,  0.625,  0.125 },
+			{ -0.1875, 0.5,    -0.1875, 0.1875, 0.5625, 0.1875 },
+			{ -0.125,  0.4375, -0.125,  0.125,  0.5,    0.125 },
+			{ -0.1875, 0.375,  -0.1875, 0.1875, 0.4375, 0.1875 },
+			{ -0.125,  -0.5,   -0.125,  0.125,  0.375,  0.125 }, -- the post, slightly short
 		},
 		-- connect_top =
 		-- connect_bottom =
-		connect_front = {{-1/16,3/16,-1/2,1/16,5/16,-1/8},
-			{-1/16,-5/16,-1/2,1/16,-3/16,-1/8}},
-		connect_left = {{-1/2,3/16,-1/16,-1/8,5/16,1/16},
-			{-1/2,-5/16,-1/16,-1/8,-3/16,1/16}},
-		connect_back = {{-1/16,3/16,1/8,1/16,5/16,1/2},
-			{-1/16,-5/16,1/8,1/16,-3/16,1/2}},
-		connect_right = {{1/8,3/16,-1/16,1/2,5/16,1/16},
-			{1/8,-5/16,-1/16,1/2,-3/16,1/16}},
+		connect_front = { { -1 / 16, 3 / 16, -1 / 2, 1 / 16, 5 / 16, -1 / 8 },
+			{ -1 / 16, -5 / 16, -1 / 2, 1 / 16, -3 / 16, -1 / 8 } },
+		connect_left = { { -1 / 2, 3 / 16, -1 / 16, -1 / 8, 5 / 16, 1 / 16 },
+			{ -1 / 2, -5 / 16, -1 / 16, -1 / 8, -3 / 16, 1 / 16 } },
+		connect_back = { { -1 / 16, 3 / 16, 1 / 8, 1 / 16, 5 / 16, 1 / 2 },
+			{ -1 / 16, -5 / 16, 1 / 8, 1 / 16, -3 / 16, 1 / 2 } },
+		connect_right = { { 1 / 8, 3 / 16, -1 / 16, 1 / 2, 5 / 16, 1 / 16 },
+			{ 1 / 8, -5 / 16, -1 / 16, 1 / 2, -3 / 16, 1 / 16 } },
 	},
-	connects_to = {"group:fence", "group:wood", "group:tree"},
-	groups = {fence=1, choppy=1, snappy=1, oddly_breakable_by_hand=1 },
+	connects_to = { "group:fence", "group:wood", "group:tree" },
+	groups = { fence = 1, choppy = 1, snappy = 1, oddly_breakable_by_hand = 1 },
 	sounds = default.node_sound_stone_defaults(),
 }
-
 local sclip_tex = {
 	"technic_insulator_clip.png",
 	{ name = "strut.png^technic_steel_strut_overlay.png", color = "white" },
@@ -215,15 +243,14 @@ if minetest.get_modpath("unifieddyes") then
 	iclip_def.after_place_node = function(pos, placer, itemstack, pointed_thing)
 		unifieddyes.fix_rotation(pos, placer, itemstack, pointed_thing)
 	end
-	iclip_def.groups = {choppy=1, snappy=1, oddly_breakable_by_hand=1, ud_param2_colorable = 1}
+	iclip_def.groups = { choppy = 1, snappy = 1, oddly_breakable_by_hand = 1, ud_param2_colorable = 1 }
 	iclip_def.on_dig = unifieddyes.on_dig
 
 	iclipfence_def.paramtype2 = "color"
 	iclipfence_def.palette = "unifieddyes_palette_extended.png"
 	iclipfence_def.on_construct = unifieddyes.on_construct
-	iclipfence_def.groups = {fence=1, choppy=1, snappy=1, oddly_breakable_by_hand=1, ud_param2_colorable = 1}
+	iclipfence_def.groups = { fence = 1, choppy = 1, snappy = 1, oddly_breakable_by_hand = 1, ud_param2_colorable = 1 }
 	iclipfence_def.on_dig = unifieddyes.on_dig
-
 	sclip_def.paramtype2 = "colorwallmounted"
 	sclip_def.palette = "unifieddyes_palette_colorwallmounted.png"
 	sclip_def.after_place_node = function(pos, placer, itemstack, pointed_thing)
@@ -239,18 +266,18 @@ minetest.register_node(":technic:insulator_clip_fencepost", iclipfence_def)
 minetest.register_craft({
 	output = "technic:insulator_clip",
 	recipe = {
-		{ "", "dye:white", ""},
-		{ "", "technic:raw_latex", ""},
-		{ "technic:raw_latex", "default:stone", "technic:raw_latex"},
+		{ "",                  "dye:white",         "" },
+		{ "",                  "technic:raw_latex", "" },
+		{ "technic:raw_latex", "default:stone",     "technic:raw_latex" },
 	}
 })
 
 minetest.register_craft({
 	output = "technic:insulator_clip_fencepost 2",
 	recipe = {
-		{ "", "dye:white", ""},
-		{ "", "technic:raw_latex", ""},
-		{ "technic:raw_latex", "default:fence_wood", "technic:raw_latex"},
+		{ "",                  "dye:white",          "" },
+		{ "",                  "technic:raw_latex",  "" },
+		{ "technic:raw_latex", "default:fence_wood", "technic:raw_latex" },
 	}
 })
 
@@ -345,91 +372,4 @@ if minetest.get_modpath("unifieddyes") then
 			}
 		})
 	end
-end
-
-for i = 0, 31 do
-	minetest.register_alias("technic:concrete_post"..i,
-			"technic:concrete_post")
-end
-for i = 32, 63 do
-	minetest.register_alias("technic:concrete_post"..i,
-			"technic:concrete_post_with_platform")
-end
-
-minetest.register_craft({
-	output = 'technic:concrete_post_platform 6',
-	recipe = {
-		{'basic_materials:concrete_block','technic:concrete_post','basic_materials:concrete_block'},
-	}
-})
-
-minetest.register_craft({
-	output = 'technic:concrete_post 12',
-	recipe = {
-		{'basic_materials:concrete_block','basic_materials:steel_bar','basic_materials:concrete_block'},
-		{'basic_materials:concrete_block','basic_materials:steel_bar','basic_materials:concrete_block'},
-		{'basic_materials:concrete_block','basic_materials:steel_bar','basic_materials:concrete_block'},
-	}
-})
-
-local box_platform = {-0.5,  0.3,  -0.5,  0.5,  0.5, 0.5}
-local box_post     = {-0.15, -0.5, -0.15, 0.15, 0.5, 0.15}
-local box_front    = {-0.1,  -0.3, -0.5,  0.1,  0.3, 0}
-local box_back     = {-0.1,  -0.3, 0,     0.1,  0.3, 0.5}
-local box_left     = {-0.5,  -0.3, -0.1,  0,    0.3, 0.1}
-local box_right    = {0,     -0.3, -0.1,  0.5,  0.3, 0.1}
-
-minetest.register_node(":technic:concrete_post_platform", {
-	description = S("Concrete Post Platform"),
-	tiles = {"basic_materials_concrete_block.png",},
-	groups={cracky=1, level=2},
-	sounds = default.node_sound_stone_defaults(),
-	paramtype = "light",
-	drawtype = "nodebox",
-	node_box = {
-		type = "fixed",
-		fixed = {box_platform}
-	},
-	on_place = function (itemstack, placer, pointed_thing)
-		local node = minetest.get_node(pointed_thing.under)
-		if node.name ~= "technic:concrete_post" then
-			return minetest.item_place_node(itemstack, placer, pointed_thing)
-		end
-		minetest.set_node(pointed_thing.under, {name="technic:concrete_post_with_platform"})
-		itemstack:take_item()
-		placer:set_wielded_item(itemstack)
-		return itemstack
-	end,
-})
-
-for platform = 0, 1 do
-	local after_dig_node = nil
-	if platform == 1 then
-		after_dig_node = function(pos, old_node)
-			old_node.name = "technic:concrete_post"
-			minetest.set_node(pos, old_node)
-		end
-	end
-
-	minetest.register_node(":technic:concrete_post"..(platform == 1 and "_with_platform" or ""), {
-		description = S("Concrete Post"),
-		tiles = {"basic_materials_concrete_block.png"},
-		groups = {cracky=1, level=2, concrete_post=1, not_in_creative_inventory=platform},
-		sounds = default.node_sound_stone_defaults(),
-		drop = (platform == 1 and "technic:concrete_post_platform" or
-				"technic:concrete_post"),
-		paramtype = "light",
-		sunlight_propagates = true,
-		drawtype = "nodebox",
-		connects_to = {"group:concrete", "group:concrete_post"},
-		node_box = {
-			type = "connected",
-			fixed = {box_post, (platform == 1 and box_platform or nil)},
-			connect_front = box_front,
-			connect_back  = box_back,
-			connect_left  = box_left,
-			connect_right = box_right,
-		},
-		after_dig_node = after_dig_node,
-	})
 end

@@ -1,239 +1,536 @@
+local S = rawget(_G, "intllib") and intllib.make_gettext_pair() or function(s) return s end
 
-local S = minetest.get_translator(minetest.get_current_modname())
+local pipeworks = rawget(_G, "pipeworks")
+local fs_helpers
+local tubelib_exists = minetest.global_exists("tubelib")
 
-local has_pipeworks = minetest.get_modpath("pipeworks")
-local has_digilines = minetest.get_modpath("digilines")
-local has_protector = minetest.get_modpath("protector")
+local registered_chest_data = {} -- data passed to :register()
 
-local tube_entry = has_pipeworks and "^pipeworks_tube_connection_metallic.png" or ""
-local protector_overlay = has_protector and "^protector_logo.png" or "^technic_protector_overlay.png"
+local allow_label = ""
+local tube_entry = ""
+local shift_edit_field = 0
 
-local node_groups = {
-	snappy = 2,
-	choppy = 2,
-	oddly_breakable_by_hand = 2,
-	tubedevice = 1,
-	tubedevice_receiver = 1,
-	technic_chest = 1,
-}
-
-local node_groups_no_inv = {
-	snappy = 2,
-	choppy = 2,
-	oddly_breakable_by_hand = 2,
-	tubedevice = 1,
-	tubedevice_receiver = 1,
-	technic_chest = 1,
-	not_in_creative_inventory = 1,
-}
-
-local function get_tiles(data, color)
-	local tiles = data.tiles and table.copy(data.tiles) or {
-		data.texture_prefix.."_top.png"..tube_entry,
-		data.texture_prefix.."_top.png"..tube_entry,
-		data.texture_prefix.."_side.png"..tube_entry,
-		data.texture_prefix.."_side.png"..tube_entry,
-		data.texture_prefix.."_side.png"..tube_entry,
-		data.texture_prefix.."_front.png"
-	}
-	if data.color and color then
-		tiles[6] = tiles[6].."^technic_chest_overlay_"..technic.chests.colors[color][1]..".png"
-	end
-	if data.locked then
-		tiles[6] = tiles[6].."^"..data.texture_prefix.."_lock_overlay.png"
-	elseif data.protected then
-		tiles[6] = tiles[6]..protector_overlay
-	end
-	return tiles
+if not minetest.get_modpath("pipeworks") then
+	-- Pipeworks is not installed. Simulate using a dummy table...
+	pipeworks = {}
+	fs_helpers = {}
+	local pipeworks_meta = {}
+	setmetatable(pipeworks, pipeworks_meta)
+	local dummy = function()
+		end
+	pipeworks_meta.__index = function(table, key)
+			print("[technic_chests] WARNING: variable or method '"..key.."' not present in dummy pipeworks table - assuming it is a method...")
+			pipeworks[key] = dummy
+			return dummy
+		end
+	pipeworks.after_place = dummy
+	pipeworks.after_dig = dummy
+	fs_helpers.cycling_button = function() return "" end
+else
+	fs_helpers = pipeworks.fs_helpers
+	allow_label = "Allow splitting incoming stacks from tubes"
+	shift_edit_field = 3
+	tube_entry = "^pipeworks_tube_connection_metallic.png"
 end
 
-function technic.chests.register_chest(nodename, data)
-	assert(data.tiles or data.texture_prefix, "technic.chests.register_chest: tiles or texture_prefix required")
-	assert(data.description, "technic.chests.register_chest: description required")
-	local colon
-	colon, nodename = nodename:match("^(:?)(.+)")
+-- Change the appearance of the chest
+local chest_mark_colors = {
+	{"black", S("Black")},
+	{"blue", S("Blue")},
+	{"brown", S("Brown")},
+	{"cyan", S("Cyan")},
+	{"dark_green", S("Dark Green")},
+	{"dark_grey", S("Dark Grey")},
+	{"green", S("Green")},
+	{"grey", S("Grey")},
+	{"magenta", S("Magenta")},
+	{"orange", S("Orange")},
+	{"pink", S("Pink")},
+	{"red", S("Red")},
+	{"violet", S("Violet")},
+	{"white", S("White")},
+	{"yellow", S("Yellow")},
+}
 
-	if data.digilines and not has_digilines then
-		data.digilines = nil
+
+local function colorid_to_postfix(id)
+	return chest_mark_colors[id] and "_"..chest_mark_colors[id][1] or ""
+end
+
+
+local function get_color_buttons(coleft, lotop)
+	local buttons_string = ""
+	for y = 0, 3 do
+		for x = 0, 3 do
+			local file_name = "technic_colorbutton"..(y * 4 + x)..".png"
+			buttons_string = buttons_string.."image_button["
+				..(coleft + 0.1 + x * 0.7)..","..(lotop + 0.1 + y * 0.7)
+				..";0.8,0.8;"..file_name..";color_button"
+				..(y * 4 + x + 1)..";]"
+		end
+	end
+	return buttons_string
+end
+
+
+local function check_color_buttons(pos, meta, chest_name, fields)
+	for i = 1, 16 do
+		if fields["color_button"..i] then
+			local node = minetest.get_node(pos)
+			node.name = chest_name..colorid_to_postfix(i)
+			minetest.swap_node(pos, node)
+			meta:set_string("color", i)
+			return
+		end
+	end
+end
+
+local function set_formspec(pos, data, page, may_modify)
+	local meta = minetest.get_meta(pos)
+
+	-- Static formspec elements are in base_formspec
+	local fs = { data.base_formspec }
+
+	-- Pipeworks splitting setting
+	fs[#fs + 1] = fs_helpers.cycling_button(
+		meta,
+		"image_button[0,0.5;1,0.6",
+		"splitstacks",
+		{
+			pipeworks.button_off,
+			pipeworks.button_on
+		}
+	)
+
+	if data.autosort then
+		local status = meta:get_int("autosort")
+		fs[#fs + 1] = ("checkbox[%g,%g;autosort_to_%s;%s;%s]"):format(
+			data.hileft + 2.2, data.lotop - 1.15,
+			tostring(1 - status), S("Auto-sort upon exit"), tostring(status == 1))
 	end
 
-	data.formspec = technic.chests.get_formspec(data)
-	local def = {
-		description = data.description,
-		tiles = data.tiles or get_tiles(data),
-		paramtype2 = "facedir",
-		legacy_facedir_simple = true,
-		groups = node_groups,
-		sounds = default.node_sound_wood_defaults(),
-		drop = nodename,
-		after_place_node = function(pos, placer)
-			local meta = minetest.get_meta(pos)
-			if data.locked then
-				local owner = placer:get_player_name() or ""
-				meta:set_string("owner", owner)
-				meta:set_string("infotext", S("@1 (owned by @2)", data.description, owner))
+	if data.infotext then
+		local formspec_infotext = minetest.formspec_escape(meta:get_string("infotext"))
+
+		local button_fmt = "image_button[%g,0;0.8,0.8;%s;%s;]"
+		if page == "main" or not may_modify then
+			fs[#fs + 1] = button_fmt:format(shift_edit_field + data.hileft + 6.1,
+				"technic_pencil_icon.png", "edit_infotext")
+
+			fs[#fs + 1] = "label[" .. (shift_edit_field + data.hileft + 7.1) .. ",0.1;" .. formspec_infotext .. "]"
+		elseif page == "edit_infotext" then
+			fs[#fs + 1] = button_fmt:format(shift_edit_field + data.hileft + 6.1,
+				"technic_checkmark_icon.png", "save_infotext")
+
+			fs[#fs + 1] = "field[" .. (shift_edit_field + data.hileft + 7.3) .. ",0.2;4,1;"
+					.."infotext_box;;"
+					..formspec_infotext.."]"
+		end
+	end
+	if data.color then
+		local colorID = meta:get_int("color")
+		local colorName
+		if chest_mark_colors[colorID] then
+			colorName = chest_mark_colors[colorID][2]
+		else
+			colorName = S("None")
+		end
+		fs[#fs + 1] = "label["..(data.coleft+0.2)..","..(data.lotop+3)..";"..S("Color Filter: %s"):format(colorName).."]"
+	end
+
+	if data.quickmove then
+		local spos = pos.x .. "," .. pos.y .. "," .. pos.z
+		fs[#fs + 1] = "button[" .. (data.hileft + 1) .. "," ..
+			(data.height + 2.1) .. ";2,0.8;inv_tochest;" .. S("To Chest") .. "]"
+		fs[#fs + 1] = "button[" ..
+			(data.hileft + 1) .. "," .. (data.height + 4.1) .. ";2,0.8;inv_fromchest;" .. S("To Inventory") .. "]"
+		fs[#fs + 1] = "tooltip[inv_tochest;" .. S("Move items from inventory to chest") .. "]"
+		fs[#fs + 1] = "tooltip[inv_fromchest;" .. S("Move items from chest to inventory") .. "]"
+		fs[#fs + 1] = "list[nodemeta:" .. spos .. ";quickmove;" .. (data.hileft + 1.5) .. "," ..
+			(data.height + 3) .. ";1,1]"
+		fs[#fs + 1] = "liststring[nodemeta:" .. spos .. ";quickmove]"
+		fs[#fs + 1] = "label[" ..
+			(data.hileft) .. "," .. (data.height + 3) .. ";" .. S("Item to move") .. ":\n(" .. S("Empty for all") ..
+			")]"
+		fs[#fs + 1] = "checkbox[" ..
+			(data.hileft + 1.35) ..
+			"," .. (data.height + 4.7) .. ";toggle_save_filter;" ..
+			S("Save filter") .. ";" .. meta:get_string("save_filter") .. "]"
+	end
+	if data.shared then
+		if technic.is_areas then
+			if page == "main" then
+				fs[#fs + 1] = "checkbox[" ..
+					(shift_edit_field + data.hileft + 3) ..
+					",0.2;toggle_shared;" .. S("Share chest with players added to area") ..
+					";" .. meta:get_string("shared") .. "]"
+			end
+		end
+	end
+	meta:set_string("formspec", table.concat(fs))
+end
+
+local function sort_inventory(inv)
+	local inlist = inv:get_list("main")
+	local typecnt = {}
+	local typekeys = {}
+	for _, st in ipairs(inlist) do
+		if not st:is_empty() then
+			local n = st:get_name()
+			local w = st:get_wear()
+			local m = st:get_metadata()
+			local k = string.format("%s %05d %s", n, w, m)
+			if not typecnt[k] then
+				typecnt[k] = {st}
+				table.insert(typekeys, k)
 			else
-				meta:set_string("infotext", data.description)
+				table.insert(typecnt[k], st)
 			end
-			if has_pipeworks then
-				pipeworks.after_place(pos)
+		end
+	end
+	table.sort(typekeys)
+	inv:set_list("main", {})
+	for _, k in ipairs(typekeys) do
+		for _, item in ipairs(typecnt[k]) do
+			inv:add_item("main", item)
+		end
+	end
+end
+
+local function move_inv(frominv, toinv, filter)
+	for i, v in ipairs(frominv:get_list("main") or {}) do
+		if v:get_name() == filter or not filter then
+            local name = v:get_name() or "air"
+			if toinv:room_for_item("main", v) and minetest.get_item_group(name, "bag") == 0 then
+				local leftover = toinv:add_item("main", v)
+
+				frominv:remove_item("main", v)
+
+				if leftover
+				and not leftover:is_empty() then
+					frominv:add_item("main", v)
+				end
 			end
-		end,
-		after_dig_node = function(pos)
-			if has_pipeworks then
-				pipeworks.after_dig(pos)
+		end
+	end
+end
+
+local function get_receive_fields(name, data)
+	local lname = name:lower()
+	return function(pos, formname, fields, sender)
+		local meta = minetest.get_meta(pos)
+		local page = "main"
+		local player_inv = sender:get_inventory()
+		local inv = meta:get_inventory()
+		local technic_interact = technic.can_interact(pos, sender:get_player_name())
+		local default_interact = default.can_interact_with_node(sender, pos)
+
+		if (fields.sort and (technic_interact or default_interact))
+			or (data.autosort and fields.quit and meta:get_int("autosort") == 1) then
+			sort_inventory(meta:get_inventory())
+		end
+
+		if not (default_interact or technic_interact) then
+            return 0
+		end
+		
+		if fields.edit_infotext then
+			page = "edit_infotext"
+		end
+		if fields.autosort_to_1 then meta:set_int("autosort", 1) end
+		if fields.autosort_to_0 then meta:set_int("autosort", 0) end
+		if fields.infotext_box then
+			meta:set_string("infotext", fields.infotext_box)
+		end
+		if fields["fs_helpers_cycling:0:splitstacks"]
+		  or fields["fs_helpers_cycling:1:splitstacks"] then
+			if not pipeworks.may_configure(pos, sender) then return end
+			fs_helpers.on_receive_fields(pos, fields)
+		end
+
+		if data.color then
+			-- This sets the node
+			local nn = "technic:"..lname..(data.locked and "_locked" or "").."_chest"
+			check_color_buttons(pos, meta, nn, fields)
+		end
+		if fields.inv_tochest then
+			if meta:get_string("item") == "" then
+				minetest.log("action", sender:get_player_name().." moves all inventory contents to chest at "..minetest.pos_to_string(pos))
+				move_inv(player_inv, inv, nil)
+			else
+				minetest.log("action", sender:get_player_name().." moves all "..meta:get_string("item").." in inventory to chest at "..minetest.pos_to_string(pos))
+				move_inv(player_inv, inv, meta:get_string("item"))
 			end
-		end,
-		tube = {
-			insert_object = function(pos, node, stack)
-				local meta = minetest.get_meta(pos)
-				if data.digilines and meta:get_int("send_inject") == 1 then
-					technic.chests.send_digiline_message(pos, "inject", nil, {stack:to_table()})
-				end
-				technic.chests.log_inv_change(pos, "pipeworks tube", "put", stack:get_name())
-				return meta:get_inventory():add_item("main", stack)
-			end,
-			can_insert = function(pos, node, stack)
-				local meta = minetest.get_meta(pos)
-				if meta:get_int("splitstacks") == 1 then
-					stack = stack:peek_item(1)
-				end
-				local can_insert = meta:get_inventory():room_for_item("main", stack)
-				if not can_insert and data.digilines and meta:get_int("send_overflow") == 1 then
-					technic.chests.send_digiline_message(pos, "overflow", nil, {stack:to_table()})
-				end
-				return can_insert
-			end,
-			remove_items = function(pos, node, stack, dir, count, list, index)
-				local meta = minetest.get_meta(pos)
-				local item = stack:take_item(count)
-				meta:get_inventory():set_stack(list, index, stack)
-				if data.digilines and meta:get_int("send_pull") == 1 then
-					technic.chests.send_digiline_message(pos, "pull", nil, {item:to_table()})
-				end
-				technic.chests.log_inv_change(pos, "pipeworks tube", "take", item:get_name())
-				return item
-			end,
-			input_inventory = "main",
-			connect_sides = {left=1, right=1, front=1, back=1, top=1, bottom=1},
+		end
+		if fields.inv_fromchest then
+			if meta:get_string("item") == "" then
+				minetest.log("action", sender:get_player_name().." moves all contents to inventory from chest at "..minetest.pos_to_string(pos))
+				move_inv(inv, player_inv, nil)
+			else
+					minetest.log("action", sender:get_player_name().." moves all "..meta:get_string("item").." to inventory from chest at "..minetest.pos_to_string(pos))
+					move_inv(inv, player_inv, meta:get_string("item"))
+			end
+		end
+		if fields.toggle_save_filter then
+			meta:set_string("save_filter", fields.toggle_save_filter)
+		end
+		if fields.quit then
+			if meta:get_string("save_filter") ~= "true" then
+				inv:set_list("quickmove", {})
+				meta:set_string("item", "")
+			end
+		end
+
+		if technic.is_areas then
+			if fields.toggle_shared then
+				meta:set_string("shared", fields.toggle_shared)
+			end
+		end
+
+
+		set_formspec(pos, data, page, technic_interact or default_interact)
+	end
+end
+
+function technic.chests:definition(name, data)
+	local lname = name:lower()
+	name = S(name)
+
+	-- Calculate formspec positions
+	data.lowidth = 8
+	data.ovwidth = math.max(data.lowidth, data.width)
+	data.hileft = (data.ovwidth - data.width) / 2
+	data.loleft = (data.ovwidth - data.lowidth) / 2
+	if data.color then
+		if data.lowidth + 3 <= data.ovwidth then
+			data.coleft = data.ovwidth - 3
+			if data.loleft + data.lowidth > data.coleft then
+				data.loleft = data.coleft - data.lowidth
+			end
+		else
+			data.loleft = 0
+			data.coleft = data.lowidth
+			data.ovwidth = data.lowidth + 3
+		end
+	end
+	data.lotop = data.height + 2
+	data.ovheight = data.lotop + 4
+
+	-- Set up constant formspec fields
+	local bg_shiftx = 0.03
+	local bg_shifty = 0.03
+	local common_background = "background[-0.19,-0.25;" .. (data.ovwidth + 0.4) .. "," .. (data.ovheight + 0.75) ..
+		";technic_chest_form_bg.png]"
+	local chest_background = "background[" .. (data.hileft + bg_shiftx) .. ",1;" ..
+		data.width .. "," .. data.height .. ";technic_" .. lname .. "_chest_inventory.png]"
+	local inventory_background = "background[" ..
+		(data.loleft + bg_shiftx) .. "," .. (data.lotop + bg_shifty) .. ";8,4;technic_main_inventory.png]"
+	local fs = {
+		"size["..data.ovwidth..","..data.ovheight.."]",
+		"label[0,0;"..S("%s Chest"):format(name).."]",
+		"list[context;main;"..data.hileft..",1;"..data.width..","..data.height..";]",
+		common_background,
+		chest_background,
+		inventory_background,
+		"list[current_player;main;"..data.loleft..","..data.lotop..";8,4;]",
+		"listring[]"
+	}
+	if #allow_label > 0 then
+		fs[#fs + 1] = ("label[0.9,0.5;%s]"):format(allow_label)
+	end
+
+	if data.color then
+		fs[#fs + 1] = get_color_buttons(data.coleft, data.lotop)
+	end
+
+	if data.sort then
+		fs[#fs + 1] = ("button[%g,%g;2,0.7;sort;%s]"):format(
+			data.hileft, data.lotop - 1, S("Sort now"))
+	end
+	data.base_formspec = table.concat(fs)
+
+	local front = {"technic_"..lname.."_chest_front.png"}
+	local locked_after_place
+	if data.locked then
+		locked_after_place = function(pos, placer)
+			local meta = minetest.get_meta(pos)
+			meta:set_string("owner", placer:get_player_name() or "")
+			meta:set_string("infotext",
+					S("%s Locked Chest (owned by %s)")
+					:format(name, meta:get_string("owner")))
+			pipeworks.after_place(pos)
+		end
+		table.insert(front, "technic_"..lname.."_chest_lock_overlay.png")
+	else
+		locked_after_place = pipeworks.after_place
+	end
+
+	local desc
+	if data.locked then
+		desc = S("%s Locked Chest"):format(name)
+	else
+		desc = S("%s Chest"):format(name)
+	end
+
+	local tentry = tube_entry
+	if tube_entry ~= "" then
+		if lname == "wooden" then
+			tentry = "^pipeworks_tube_connection_wooden.png"
+		elseif lname == "mithril" then
+			tentry = "^pipeworks_tube_connection_stony.png"
+		end
+	end
+	local def = {
+		description = desc,
+		tiles = {
+			"technic_"..lname.."_chest_top.png"..tentry,
+			"technic_"..lname.."_chest_top.png"..tentry,
+			"technic_"..lname.."_chest_side.png"..tentry,
+			"technic_"..lname.."_chest_side.png"..tentry,
+			"technic_"..lname.."_chest_side.png"..tentry,
+			table.concat(front, "^")
 		},
+		paramtype2 = "facedir",
+		groups = self.groups,
+		tube = self.tube,
+		legacy_facedir_simple = true,
+		sounds = default.node_sound_wood_defaults(),
+		after_place_node = locked_after_place,
+		after_dig_node = pipeworks.after_dig,
+
 		on_construct = function(pos)
-			local inv = minetest.get_meta(pos):get_inventory()
+			local meta = minetest.get_meta(pos)
+			meta:set_string("infotext", S("%s Chest"):format(name))
+			set_formspec(pos, data, "main")
+			local inv = meta:get_inventory()
 			inv:set_size("main", data.width * data.height)
-			if data.quickmove then
-				inv:set_size("quickmove", 1)
-			end
-			technic.chests.update_formspec(pos, data)
+			inv:set_size("quickmove", 1*1)
 		end,
-		can_dig = function(pos, player)
-			if not technic.chests.change_allowed(pos, player, data.locked, data.protected) then
-				return false
-			end
-			return minetest.get_meta(pos):get_inventory():is_empty("main")
-		end,
-		allow_metadata_inventory_move = function(pos, from_list, from_index, to_list, to_index, count, player)
-			if not technic.chests.change_allowed(pos, player, data.locked, data.protected) then
-				return 0
-			end
-			if data.quickmove and to_list == "quickmove" then
-				local meta = minetest.get_meta(pos)
-				local inv = meta:get_inventory()
-				local stack = inv:get_stack("main", from_index)
-				local moved_items = technic.chests.move_inv(inv, player:get_inventory(), stack:get_name())
-				if data.digilines and meta:get_int("send_take") == 1 then
-					technic.chests.send_digiline_message(pos, "take", player, moved_items)
-				end
-				technic.chests.log_inv_change(pos, player:get_player_name(), "take", "stuff")
-				return 0
-			end
-			return count
-		end,
-		allow_metadata_inventory_put = function(pos, listname, index, stack, player)
-			if not technic.chests.change_allowed(pos, player, data.locked, data.protected) then
-				return 0
-			end
-			if data.quickmove and listname == "quickmove" then
-				local meta = minetest.get_meta(pos)
-				local inv = meta:get_inventory()
-				local moved_items = technic.chests.move_inv(player:get_inventory(), inv, stack:get_name())
-				if data.digilines and meta:get_int("send_put") == 1 then
-					technic.chests.send_digiline_message(pos, "put", player, moved_items)
-				end
-				technic.chests.log_inv_change(pos, player:get_player_name(), "put", "stuff")
-				return 0
-			end
-			return stack:get_count()
-		end,
-		allow_metadata_inventory_take = function(pos, listname, index, stack, player)
-			if not technic.chests.change_allowed(pos, player, data.locked, data.protected) then
-				return 0
-			end
-			return stack:get_count()
-		end,
-		on_metadata_inventory_move = function(pos, from_list, from_index, to_list, to_index, count, player)
-			technic.chests.log_inv_change(pos, player:get_player_name(), "move", "stuff")
-		end,
-		on_metadata_inventory_put = function(pos, listname, index, stack, player)
-			if data.digilines and minetest.get_meta(pos):get_int("send_put") == 1 then
-				technic.chests.send_digiline_message(pos, "put", player, {stack:to_table()})
-			end
-			technic.chests.log_inv_change(pos, player:get_player_name(), "put", stack:get_name())
-		end,
-		on_metadata_inventory_take = function(pos, listname, index, stack, player)
-			if data.digilines and minetest.get_meta(pos):get_int("send_take") == 1 then
-				technic.chests.send_digiline_message(pos, "take", player, {stack:to_table()})
-			end
-			technic.chests.log_inv_change(pos, player:get_player_name(), "take", stack:get_name())
-		end,
+		can_dig = self.can_dig,
+		on_receive_fields = get_receive_fields(name, data),
+		on_metadata_inventory_move = self.on_inv_move,
+		on_metadata_inventory_put = self.on_inv_put,
+		on_metadata_inventory_take = self.on_inv_take,
 		on_blast = function(pos)
-			if data.locked or data.protected then
-				return
-			end
 			local drops = {}
 			default.get_inventory_drops(pos, "main", drops)
-			drops[#drops+1] = nodename
+			drops[#drops+1] = "technic:"..name:lower()..(data.locked and "_locked" or "").."_chest"
 			minetest.remove_node(pos)
 			return drops
 		end,
-		on_receive_fields = technic.chests.get_receive_fields(nodename, data),
 	}
+	def.allow_metadata_inventory_move = self.inv_move
+	def.allow_metadata_inventory_put = self.inv_put
+	def.allow_metadata_inventory_take = self.inv_take
 	if data.locked then
+		def.on_blast = function() end
+		def.can_dig = function(pos,player)
+			local meta = minetest.get_meta(pos);
+			local inv = meta:get_inventory()
+			return inv:is_empty("main") and (default.can_interact_with_node(player, pos) or technic.can_interact(pos, player:get_player_name()))
+		end
 		def.on_skeleton_key_use = function(pos, player, newsecret)
-			-- Copied from default chests.lua
 			local meta = minetest.get_meta(pos)
 			local owner = meta:get_string("owner")
-			local player_name = player:get_player_name()
-			if owner ~= player_name then
-				minetest.record_protection_violation(pos, player_name)
-				minetest.chat_send_player(player_name, "You do not own this chest.")
+			local name = player:get_player_name()
+
+			-- verify placer is owner of lockable chest
+			if owner ~= name then
+				minetest.record_protection_violation(pos, name)
+				minetest.chat_send_player(name, "You do not own this chest.")
 				return nil
 			end
+
 			local secret = meta:get_string("key_lock_secret")
 			if secret == "" then
 				secret = newsecret
 				meta:set_string("key_lock_secret", secret)
 			end
+
 			return secret, "a locked chest", owner
 		end
 	end
-	if data.digilines then
-		def.digiline = {
-			receptor = {},
-			effector = {
-				action = technic.chests.digiline_effector
-			},
-		}
+	return def
+end
+
+local _TUBELIB_CALLBACKS = {
+	on_pull_item = function(pos, side, player_name)
+		if not minetest.is_protected(pos, player_name) then
+			local inv = minetest.get_meta(pos):get_inventory()
+			for _, stack in pairs(inv:get_list("main")) do
+				if not stack:is_empty() then
+					return inv:remove_item("main", stack:get_name())
+				end
+			end
+		end
+		return nil
+	end,
+	on_push_item = function(pos, side, item, player_name)
+		local inv = minetest.get_meta(pos):get_inventory()
+		if inv:room_for_item("main", item) then
+			inv:add_item("main", item)
+			return true
+		end
+		return false
+	end,
+	on_unpull_item = function(pos, side, item, player_name)
+		local inv = minetest.get_meta(pos):get_inventory()
+		if inv:room_for_item("main", item) then
+			inv:add_item("main", item)
+			return true
+		end
+		return false
+	end,
+}
+
+function technic.chests:register(name, data)
+	data = table.copy(data) -- drop reference
+	local def = technic.chests:definition(name, data)
+
+	local nn = "technic:"..name:lower()..(data.locked and "_locked" or "").."_chest"
+	minetest.register_node(":"..nn, def)
+	registered_chest_data[nn] = data
+
+	if tubelib_exists then
+		tubelib.register_node(nn, {}, _TUBELIB_CALLBACKS)
 	end
-	minetest.register_node(colon..nodename, def)
+
 	if data.color then
+		local mk_front
+		if string.find(def.tiles[6], "%^") then
+			mk_front = function (overlay) return def.tiles[6]:gsub("%^", "^"..overlay.."^") end
+		else
+			mk_front = function (overlay) return def.tiles[6].."^"..overlay end
+		end
 		for i = 1, 15 do
+			local postfix = colorid_to_postfix(i)
 			local colordef = {}
 			for k, v in pairs(def) do
 				colordef[k] = v
 			end
-			colordef.groups = node_groups_no_inv
-			colordef.tiles = get_tiles(data, i)
-			minetest.register_node(colon..nodename.."_"..technic.chests.colors[i][1], colordef)
+			colordef.drop = nn
+			colordef.groups = self.groups_noinv
+			colordef.tiles = { def.tiles[1], def.tiles[2], def.tiles[3], def.tiles[4], def.tiles[5], mk_front("technic_chest_overlay"..postfix..".png") }
+
+			local new_name = nn .. postfix
+			minetest.register_node(":" .. new_name, colordef)
+			registered_chest_data[new_name] = data -- for all colors
+
+			if tubelib_exists then
+				tubelib.register_node(nn..postfix, {}, _TUBELIB_CALLBACKS)
+			end
 		end
 	end
 end
+
+-- Migration of chest formspecs
+-- Group is specified in common.lua
+minetest.register_lbm({
+	label = "technic_chests formspec upgrade",
+	name = "technic_chests:upgrade_formspec",
+	nodenames = {"group:technic_chest"},
+	run_at_every_load = false,
+	action = function(pos, node)
+		set_formspec(pos, registered_chest_data[node.name], "main")
+	end
+})

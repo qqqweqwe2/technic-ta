@@ -3,8 +3,8 @@ technic.config = technic.config or Settings(minetest.get_worldpath().."/technic.
 local conf_table = technic.config:to_table()
 
 local defaults = {
-	enable_granite_generation = "true",
-	enable_marble_generation = "true",
+	enable_granite_generation = "false",
+	enable_marble_generation = "false",
 	enable_rubber_tree_generation = "true",
 }
 
