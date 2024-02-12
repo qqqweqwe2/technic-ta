@@ -3,11 +3,19 @@ technic = rawget(_G, "technic") or {}
 
 technic.plus = true
 technic.version = 1.2
+technic.mod = "tunnelers"
 
 if minetest.get_modpath("mcl_sounds") then
 	technic.sounds = mcl_sounds
 else
 	technic.sounds = assert(default, "No suitable mod found for sounds")
+end
+
+technic.extranodes = {
+	granite = "underch:granite",
+}
+if technic.config:get_bool("enable_granite_generation") then
+	technic.extranodes.granite = "technic:granite"
 end
 
 technic.creative_mode = minetest.settings:get_bool("creative_mode")
@@ -42,8 +50,11 @@ dofile(modpath.."/items.lua")
 -- Craft recipes for items
 dofile(modpath.."/crafts.lua")
 
+-- Custom
+dofile(modpath.."/ta_custom.lua")
+
 -- Radiation
-dofile(modpath.."/radiation.lua")
+dofile(modpath.."/ta_radiation.lua")
 
 -- Machines
 dofile(modpath.."/machines/init.lua")

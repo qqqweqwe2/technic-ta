@@ -124,15 +124,6 @@ minetest.register_craft({
 })
 
 minetest.register_craft({
-	output = 'technic:mv_transformer',
-	recipe = {
-		{mat.insulation,                    'technic:carbon_steel_ingot', mat.insulation},
-		{'technic:copper_coil',        'technic:carbon_steel_ingot', 'technic:copper_coil'},
-		{'technic:carbon_steel_ingot', 'technic:carbon_steel_ingot', 'technic:carbon_steel_ingot'},
-	}
-})
-
-minetest.register_craft({
 	output = 'technic:hv_transformer',
 	recipe = {
 		{mat.insulation,                       'technic:stainless_steel_ingot', mat.insulation},

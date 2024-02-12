@@ -175,7 +175,8 @@ minetest.register_abm({
 	interval   = 1,
 	chance     = 1,
 	action = function(pos, node, active_object_count, active_object_count_wider)
-		if not technic.machine_tiers[node.name] then
+        local name = node.name or ""
+		if not name:find("lv_") and not name:find("hv_") and not name:find("_lv") and not name:find("_hv") then
 			-- https://github.com/mt-mods/technic/issues/123
 			return
 		end

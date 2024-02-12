@@ -285,3 +285,11 @@ function technic.process_recipe(recipe, inv)
 	inv:set_list("src", recipe.new_input)
 	return true
 end
+
+technic.technic_charge_key = "technic:charge"
+
+function technic.get_charge_level(itemstack)
+    local meta = itemstack:get_meta()
+    if not meta then return nil end
+    return meta:get_int(technic.technic_charge_key) or 0
+end

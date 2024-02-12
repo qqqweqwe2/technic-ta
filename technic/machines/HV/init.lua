@@ -18,3 +18,14 @@ dofile(path.."/forcefield.lua")
 dofile(path.."/electric_furnace.lua")
 dofile(path.."/grinder.lua")
 dofile(path.."/compressor.lua")
+
+--Custom
+
+-- Machines
+dofile(path.."/alloy_furnace.lua")
+dofile(path.."/centrifuge.lua")
+dofile(path.."/compactor.lua")
+dofile(path.."/extractor.lua")
+dofile(path.."/sawmill.lua")
+dofile(path.."/thresher.lua")
+dofile(path.."/tool_workshop.lua")

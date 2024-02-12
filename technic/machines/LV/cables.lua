@@ -39,7 +39,7 @@ technic.register_cable_plate("technic:lv_cable_plate", {
 	description = S("@1 Cable Plate", S("LV")),
 	tiles = {"technic_lv_cable.png"},
 })
-
+--[[
 if minetest.get_modpath("digilines") then
 	technic.register_cable("technic:lv_digi_cable", {
 		tier = "LV",
@@ -54,4 +54,4 @@ if minetest.get_modpath("digilines") then
 		digiline = { wire = { rules = technic.digilines.rules_allfaces } },
 		tiles = {"technic_lv_digi_cable.png"}
 	})
-end
+end]]

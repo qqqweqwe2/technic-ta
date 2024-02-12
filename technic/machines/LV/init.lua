@@ -11,7 +11,7 @@ dofile(path.."/battery_box.lua")
 dofile(path.."/solar_panel.lua")
 dofile(path.."/solar_array.lua")
 dofile(path.."/geothermal.lua")
-dofile(path.."/water_mill.lua")
+--dofile(path.."/water_mill.lua")
 dofile(path.."/generator.lua")
 
 -- Machines
@@ -25,3 +25,4 @@ dofile(path.."/music_player.lua")
 
 dofile(path.."/led.lua")
 dofile(path.."/lamp.lua")
+dofile(path.."/sawmill.lua")

@@ -30,7 +30,7 @@ technic.register_power_tool("technic:blue_energy_crystal", {
 		"technic_diamond_block_blue.png",
 		"technic_diamond_block_blue.png"),
 	groups = { disable_repair = 1 },
-	max_charge = 450000,
+	max_charge = 1000000,
 })
 
 technic.register_power_tool("technic:green_energy_crystal", {
@@ -40,7 +40,7 @@ technic.register_power_tool("technic:green_energy_crystal", {
 		"technic_diamond_block_green.png",
 		"technic_diamond_block_green.png"),
 	groups = { disable_repair = 1 },
-	max_charge = 150000,
+	max_charge = 700000,
 })
 
 technic.register_power_tool("technic:red_energy_crystal", {
@@ -50,7 +50,7 @@ technic.register_power_tool("technic:red_energy_crystal", {
 		"technic_diamond_block_red.png",
 		"technic_diamond_block_red.png"),
 	groups = { disable_repair = 1 },
-	max_charge = 50000,
+	max_charge = 400000,
 })
 
 minetest.register_craftitem("technic:copper_coil", {

@@ -16,7 +16,7 @@ local recipes = {
 	{ "technic:bronze_dust 8",             "technic:copper_dust 7",       "technic:tin_dust"      },
 	{ "technic:stainless_steel_dust 5",    "technic:wrought_iron_dust 4", "technic:chromium_dust" },
 	{ "technic:brass_dust 3",              "technic:copper_dust 2",       "technic:zinc_dust"     },
-	{ "technic:chernobylite_dust",         mat.sand,                "technic:uranium3_dust" },
+	--{ "technic:chernobylite_dust",         mat.sand,                "technic:uranium3_dust" },
 	{ mat.dirt.." 4",                    mat.sand,                mat.gravel,       mat.clay_lump.." 4" },
 }
 

@@ -7,7 +7,7 @@ minetest.register_craft({
 	recipe = {
 		{mat.desert_stone, mat.diamond, mat.desert_stone},
 		{mat.desert_stone, 'technic:machine_casing', mat.desert_stone},
-		{'technic:granite', 'technic:lv_cable', 'technic:granite'},
+		{'underch:granite', 'technic:lv_cable', 'underch:granite'},
 	}
 })
 

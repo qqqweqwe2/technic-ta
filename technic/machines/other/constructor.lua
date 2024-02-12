@@ -4,13 +4,47 @@ local S = technic.getter
 local function deploy_node(inv, slot_name, pos, node, machine_node)
 	if node.param2 > 3 then return end
 	if node.name ~= "air" then
-		if node.name == "ignore" or
-		   node.name == "default:chest_open" or
-		   node.name == "default:chest_locked_open" or
-		   node.name == "default:lava_source" or
-		   node.name == "default:lava_flowing" or
-		   node.name == "default:water_source" or
-		   node.name == "default:water_flowing" then
+        if node.name == "ignore" or
+		   node.name == "default:chest_open" or -- chest_open
+		   node.name == "default:chest_locked_open" or -- chest_locked_open
+		   node.name == "default:chest" or -- chest
+		   node.name == "default:chest_locked" or -- chest_locked
+		   node.name == "technic:copper_locked_chest" or -- chest
+		   node.name == "technic:iron_locked_chest" or -- chest_locked
+		   node.name == "technic:silver_locked_chest" or -- chest
+		   node.name == "technic:gold_locked_chest" or -- chest_locked
+		   node.name == "technic:mithril_locked_chest" or
+		   node.name == "technic:copper_chest" or -- chest
+		   node.name == "technic:iron_chest" or -- chest_locked
+		   node.name == "technic:silver_chest" or -- chest
+		   node.name == "technic:gold_chest" or -- chest_locked
+		   node.name == "technic:mithril_chest" or
+		   node.name == "doors:door_steel_a" or -- prevent griefer to put an constrcutor mk3 in the front of the door and dig it lol
+		   node.name == "doors:door_steel_b" or -- prevent griefer to put an constrcutor mk3 in the front of the door and dig it lol
+		   node.name == "doors:door_steel" or -- prevent griefer to put an constrcutor mk3 in the front of the door and dig it lol
+		   node.name == "default:lava_source" or -- lava source
+		   node.name == "default:lava_flowing" or -- lava flowing
+		   node.name == "default:water_source" or -- water source
+		   node.name == "default:water_flowing" or -- water flowing
+		   node.name == "default:river_water_source" or -- river_water_source
+		   node.name == "default:river_water_flowing" or -- river_water_flowing
+		   node.name == "technic:corium_source" or -- corium_source
+		   node.name == "technic:corium_flowing" or -- corium_flowing
+		   node.name == "elements:glue_source" or -- glue_source
+		   node.name == "elements:glue_flowing" or -- glue_flowing
+		   node.name == "australia:muddy_river_water_source" or -- a liquid O_o
+		   node.name == "australia:muddy_river_water_flowing" or -- a liquid O_o
+		   node.name == "aotearoa:boiling_mud_source" or -- an other liquid O_o
+		   node.name == "aotearoa:boiling_mud_flowing" or -- an other liquid O_o
+		   node.name == "advtrains:dtrack_stop_st" or -- prevent to dig dtrack_stop_st
+		   node.name == "advtrains_interlocking:dtrack_npr_placer" or -- prevent to dig dtrack_npr_placer
+		   node.name == "advtrains_luaautomation:dtrack_placer" or -- prevent to dig dtrack_placer
+		   node.name == "advtrains:dtrack_bumper_placer" or -- prevent to dig dtrack_bumper_placer
+		   node.name == "advtrains_line_automation:dtrack_stop_place" or -- prevent to dig dtrack_stop_place
+		   node.name == "advtrains:dtrack_unload_place" or -- prevent to dig dtrack_unload_place
+           node.name == "elements:nuclear_bomb" or
+           node.name == "tnt:tnt" or
+		   node.name == "advtrains:dtrack_st" then -- prevent to dig dtrack_st
 			return
 		end
 		local drops = minetest.get_node_drops(node.name, "")

@@ -1,263 +1,316 @@
-
 local have_ui = minetest.get_modpath("unified_inventory")
 local have_cg = minetest.get_modpath("craftguide")
-local have_mcl_cg = minetest.get_modpath("mcl_craftguide")
 local have_i3 = minetest.get_modpath("i3")
 
-technic.recipes = {
-	cooking = {input_size = 1, output_size = 1, recipes = {}},
-}
+technic.recipes = { cooking = { input_size = 1, output_size = 1 } }
 
-local temp_recipes = {}  -- Used to store recipes before caching
-local recipe_cache = {}  -- Cache used by technic.get_recipe
+technic.craft_groups = {"wood", "stone", "soil", "mossycobble", "sand", "tree", "water", "cobblestone", "bakedclay", "leaves", "uranium_dust"} -- add all groups used in technic recipes here!
 
-function technic.register_recipe_type(method, data)
-	data = table.copy(data)
+function technic.register_recipe_type(typename, origdata)
+	local data = {}
+	for k, v in pairs(origdata) do data[k] = v end
 	data.input_size = data.input_size or 1
 	data.output_size = data.output_size or 1
+	if have_ui and unified_inventory.register_craft_type then
+		local ctable = {
+				description = data.description,
+				width = data.input_size,
+				height = 1,
+		}
+		if data.output_size > 1 then
+			ctable.icon = data.icon or "technic_recipe_icon_empty.png"
+			ctable.icon = ctable.icon .. "^technic_recipe_icon_plus.png"
+		else
+			ctable.icon = data.icon or "technic_recipe_icon_empty.png"
+		end
+
+		unified_inventory.register_craft_type(typename, ctable)
+
+		if data.output_size == 1 then
+			if have_cg and craftguide.register_craft_type then
+				craftguide.register_craft_type(typename, {
+					description = data.description,
+				})
+			end
+			if have_i3 then
+				i3.register_craft_type(typename, {
+					description = data.description,
+				})
+			end
+		end
+	end
 	data.recipes = {}
-	if have_ui then
-		unified_inventory.register_craft_type(method, {
-			description = data.description,
-			icon = data.icon,
-			width = data.input_size,
-			height = 1,
-		})
-	end
-	if have_cg then
-		craftguide.register_craft_type(method, {
-			description = data.description,
-			icon = data.icon,
-		})
-	end
-	if have_mcl_cg then
-		mcl_craftguide.register_craft_type(method, {
-			description = data.description,
-			icon = data.icon,
-		})
-	end
-	if have_i3 then
-		i3.register_craft_type(method, {
-			description = data.description,
-			icon = data.icon,
-		})
-	end
-	technic.recipes[method] = data
+	technic.recipes[typename] = data
 end
 
-function technic.register_recipe(method, data)
-	data.time = data.time or 1
-	data.method = method
-	if type(data.input) == "string" then
-		data.input = {data.input}
-	end
-	if type(data.output) == "string" then
-		data.output = {data.output}
-	end
-	table.insert(temp_recipes, data)
-end
-
-local function get_recipe_key(method, items)
-	local t = {}
+local function get_recipe_index(items)
+	if not items or type(items) ~= "table" then return false end
+	local l = {}
 	for i, stack in ipairs(items) do
-		t[i] = ItemStack(stack):get_name()
+		l[i] = ItemStack(stack):get_name()
 	end
-	table.sort(t)
-	return method.."/"..table.concat(t, "/")
+	table.sort(l)
+	return table.concat(l, "/")
 end
 
-function technic.get_recipe(method, items)
-	local key = get_recipe_key(method, items)
-	local recipe = recipe_cache[key]
-	if not recipe then
+local function register_recipe(typename, data)
+	-- Handle aliases
+	for i, stack in ipairs(data.input) do
+		data.input[i] = ItemStack(stack):to_string()
+	end
+	if type(data.output) == "table" then
+		for i, v in ipairs(data.output) do
+			data.output[i] = ItemStack(data.output[i]):to_string()
+		end
+	else
+		data.output = ItemStack(data.output):to_string()
+	end
+
+	local recipe = {time = data.time, input = {}, output = data.output}
+
+	local index = get_recipe_index(data.input)
+	if not index then
+		print("[Technic] ignored registration of garbage recipe!")
 		return
 	end
-	local new_input = {}
-	for i, stack in ipairs(items) do
-		local amount = recipe.input[stack:get_name()]
-		if stack:get_count() < amount then
-			return
-		else
-			new_input[i] = ItemStack(stack)
-			new_input[i]:take_item(amount)
-		end
+	for _, stack in ipairs(data.input) do
+		recipe.input[ItemStack(stack):get_name()] = ItemStack(stack):get_count()
 	end
-	return {
-		time = recipe.time,
-		new_input = new_input,
-		output = recipe.output
-	}
-end
 
-local function add_to_craftguides(recipe)
-	for _, output in ipairs(recipe.output) do
-		if have_ui then
-			unified_inventory.register_craft({
-				type = recipe.method,
-				output = output,
-				items = table.copy(recipe.input),
-				width = 0,
-			})
+	technic.recipes[typename].recipes[index] = recipe
+	if have_ui and technic.recipes[typename].output_size == 1 then
+		unified_inventory.register_craft({
+			type = typename,
+			output = data.output,
+			items = data.input,
+			width = 0,
+		})
+	end
+	if (have_cg or have_i3) and technic.recipes[typename].output_size == 1 then
+		local result = data.output
+		if (type(result)=="table") then
+			result = result[1]
 		end
+		local items = table.concat(data.input, ", ")
 		if have_cg and craftguide.register_craft then
 			craftguide.register_craft({
-				type = recipe.method,
-				result = output,
-				items = {table.concat(recipe.input, ", ")},
-			})
-		end
-		if have_mcl_cg then
-			mcl_craftguide.register_craft({
-				type = recipe.method,
-				output = output,
-				items = table.copy(recipe.input),
-				width = 0,
+				type = typename,
+				result = result,
+				items = {items},
 			})
 		end
 		if have_i3 then
 			i3.register_craft({
-				type = recipe.method,
-				result = output,
-				items = {table.concat(recipe.input, ", ")},
+				type = typename,
+				result = result,
+				items = {items},
 			})
 		end
 	end
-end
 
-local function get_items_in_group(group)
-	local items = {}
-	local groups = group:split(",")
-	for name, def in pairs(minetest.registered_items) do
-		local match = true
-		for _,g in pairs(groups) do
-			if not def.groups[g] then
-				match = false
-				break
-			end
-		end
-		if match then
-			items[#items+1] = name
-		end
+	if unified_inventory and technic.recipes[typename].output_size > 1 then
+		local short_output = data.output[1]
+		unified_inventory.register_craft({
+			type = typename,
+			output = short_output,
+			items = data.input,
+			width = 0,
+		})
 	end
-	return items
+
 end
 
-local function get_recipe_variants(items, index)
-	index = index or 1
-	if not items[index] then
+function technic.register_recipe(typename, data)
+	minetest.after(0.01, register_recipe, typename, data) -- Handle aliases
+end
+
+local air_item = ItemStack("air 1");
+local air_item2 = ItemStack("air 2");
+
+function technic.get_recipe(typename, items)
+	-- return early if there are no input items
+        if items == nil then
 		return
 	end
-	local list = {}
-	local variants = get_recipe_variants(items, index + 1)
-	if variants then
-		for _,a in pairs(items[index]) do
-			for _,b in pairs(variants) do
-				list[#list+1] = a..","..b
-			end
+	for k, v in pairs(items) do
+		if not ItemStack(v):is_empty() then
+			break
 		end
-	else
-		for _,a in pairs(items[index]) do
-			list[#list+1] = a
-		end
-	end
-	if index == 1 then
-		for i, str in pairs(list) do
-			list[i] = str:split(",")
-		end
-	end
-	return list
-end
-
-local function cache_recipe(data)
-	-- Create the basic recipe
-	local recipe = {time = data.time, input = {}, output = {}}
-	for _, item in ipairs(data.input) do
-		if item:match("^group:") then
-			local split = item:split(" ")
-			recipe.input[split[1]] = tonumber(split[2]) or 1
-		else
-			local stack = ItemStack(item)
-			recipe.input[stack:get_name()] = stack:get_count()
-		end
-	end
-	for i, item in ipairs(data.output) do
-		recipe.output[i] = ItemStack(item):to_string()
-	end
-	if data.method ~= "cooking" then
-		table.insert(technic.recipes[data.method].recipes, recipe)
-	end
-	-- Find all unique variants of the recipe and cache them
-	-- If there are no group items, there will only be one
-	local all_items, item_counts = {}, {}
-	local has_group_item = false
-	for item, count in pairs(recipe.input) do
-		local group = item:match("^group:(.+)$")
-		if group then
-			table.insert(all_items, get_items_in_group(group))
-			has_group_item = true
-		else
-			table.insert(all_items, {ItemStack(item):get_name()})
-		end
-		table.insert(item_counts, count)
-	end
-	if not has_group_item then
-		local key = get_recipe_key(data.method, data.input)
-		recipe_cache[key] = table.copy(recipe)
 		return
 	end
-	for _,items in pairs(get_recipe_variants(all_items)) do
-		local key = get_recipe_key(data.method, items)
-		-- Non-group recipes take priority over group recipes
-		if not has_group_item or not recipe_cache[key] then
-			local input = {}
-			for i, item in ipairs(items) do
-				input[item] = item_counts[i]
-			end
-			recipe_cache[key] = {
-				time = data.time,
-				input = input,
-				output = table.copy(recipe.output),
-			}
+
+	-- empty slots will be filled with a node of air each, for ease of processing later
+	for i=1, #items do
+		if ItemStack(items[i]):is_empty() then
+			items[i] = air_item;
+        elseif ItemStack(items[i]):get_name() == "technic:blocker" then
+            items[i] = air_item2;
 		end
 	end
-end
 
-local function cache_all_recipes()
-	-- Cache built in cooking recipes
-	for item in pairs(minetest.registered_items) do
-		local recipes = minetest.get_all_craft_recipes(item)
-		for _,recipe in ipairs(recipes or {}) do
-			if recipe.method == "cooking" then
-				local result, new_input = minetest.get_craft_result(recipe)
-				if result and result.time > 0 then
-					local data = {
-						method = "cooking",
-						time = result.time,
-						input = recipe.items,
-						output = {result.item:to_string()},
-					}
-					local replacement = new_input.items[1]
-					if not replacement:is_empty() then
-						data.output[2] = replacement:to_string()
+	if typename == "cooking" then -- Already builtin in Minetest, so use that
+		if not items then
+			return nil
+		end
+		local result, new_input = minetest.get_craft_result({
+			method = "cooking",
+			width = 1,
+			items = items})
+		-- Compatibility layer
+		if not result or result.time == 0 then
+			return nil
+		else
+			return {time = result.time,
+			        new_input = new_input.items,
+			        output = result.item}
+		end
+	end
+
+	-- build a table with all valid group and item name combinations
+	local function build_candidates(items)
+		local result = {}
+		for i, item in ipairs(items) do
+			local entry = {}
+			entry[1] = ItemStack(item):get_name()
+			for ii, g in ipairs(technic.craft_groups) do
+				if minetest.get_item_group(entry[1], g) == 1 then
+					entry[ii + 1] = "group:"..g
+				end
+			end
+			result[i] = entry
+		end
+		return result
+	end
+
+	-- iterate previously built table and return the first match
+	local function recurse_candidates(candidates, num, _items)
+		if num <= #candidates then
+			for k, v in pairs(candidates[num]) do
+				_items[num] = v
+				local result = recurse_candidates(candidates, num + 1, _items)
+				if result then
+					local r
+					if num == #candidates then
+						r = {_recipe = result}
+					else
+						r = result
 					end
-					cache_recipe(data)
+					r[v] = candidates[num][1]
+					return r;
+				end
+			end
+		else
+			local index = get_recipe_index(_items)
+			if not index then
+				print("[Technic] ignored registration of garbage recipe!")
+				return
+			end
+			local result = technic.recipes[typename].recipes[index]
+
+			return result
+		end
+	end
+
+	local index = get_recipe_index(items)
+	if not index then
+		print("[Technic] ignored registration of garbage recipe!")
+		return
+	end
+	local recipe = technic.recipes[typename].recipes[index]
+
+	if not recipe then -- if the direct recipe doesn't exist, we need to take the groups into account and retry
+		local candidates = build_candidates(items)
+
+		local result = recurse_candidates(candidates, 1, {})
+
+		if result then
+			-- copy recipe
+			recipe = {}
+			for k, v in pairs(result._recipe) do
+				recipe[k] = v
+			end
+
+			-- erase original inputs and write new ones with groups replaced by actual items
+			recipe.input = {}
+			for k, v in pairs(result) do
+				if (k ~= "_recipe") then
+					recipe.input[v] = result._recipe.input[k]
 				end
 			end
 		end
 	end
-	-- Cache custom recipes
-	for _, data in pairs(temp_recipes) do
-		if not data.hidden then
-			add_to_craftguides(data)
+    local inputamount = 0
+	if recipe then
+		local new_input = {}
+		local extra_output = {}
+		for i, stack in ipairs(items) do
+            --minetest.log(stack:get_name())
+            inputamount = stack:get_count() or 1
+			if stack:get_name() == "air" or stack:get_name() == "technic:blocker" then
+                if stack:get_count() == 2 then
+                    new_input[i] = ItemStack(stack)
+                    new_input[i]:replace("technic:blocker")
+                end
+				-- air and blocker are placeholders, do nothing
+			elseif technic.cans[stack:get_name()] then
+			-- Check if a can is used. If so, with each iteration its contents are depleted,
+			-- and when it runs dry, an empty can is added to the recipe's output.
+				local level = technic.manage_can_state(stack)
+				if not level or level < 1 then
+					return nil
+				else
+					if level > 1 then
+						new_input[i] = technic.manage_can_state(ItemStack(stack), -1)
+					else
+						empty_can = technic.manage_can_state(ItemStack(stack), -1)
+						table.insert(extra_output, empty_can)
+					end
+				end
+			else
+				local input = recipe.input[stack:get_name()] or 0
+				if stack:get_count() ~= nil and stack:get_count() < input then
+					return nil
+				else
+					new_input[i] = ItemStack(stack)
+					new_input[i]:take_item(input)
+				end
+			end
 		end
-		cache_recipe(data)
-	end
-	temp_recipes = nil
-end
 
--- Slightly hacky way to be the first function called
-table.insert(minetest.registered_on_mods_loaded, 1, cache_all_recipes)
-minetest.callback_origins[cache_all_recipes] = {
-	mod = "technic",
-	name = "register_on_mods_loaded",
-}
+		-- A necessary hack to avoid reusing the original table
+		if #extra_output > 0 then
+			local ro = {}
+			if type(recipe.output) == "string" then
+				table.insert(ro, recipe.output)
+			else
+				for _,o in ipairs(recipe.output) do
+					table.insert(ro, o)
+				end
+			end
+			for _,o in ipairs(extra_output) do
+				table.insert(ro, o)
+			end
+			return {time = recipe.time,
+				  new_input = new_input,
+				  output = ro}
+		end
+		-- regular output
+        if typename == "decay_accelerator" then
+			local time = 0
+			if inputamount >= 20 then
+            	time = recipe.time / (inputamount / 300) or 100
+			else
+				time = recipe.time / (inputamount / 100) or 100
+			end
+		    return {time = time,
+			  new_input = new_input,
+			  output = recipe.output}
+        else
+		    return {time = recipe.time,
+			  new_input = new_input,
+			  output = recipe.output}
+        end
+	else
+		return nil
+	end
+end
