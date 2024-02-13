@@ -275,6 +275,7 @@ end
 
 function technic.process_recipe(recipe, inv)
 	local dst_copy = inv:get_list("dst")
+    if type(recipe.output) == "string" then recipe.output = {recipe.output} end
 	for _,item in ipairs(recipe.output) do
 		if not inv:room_for_item("dst", ItemStack(item)) then
 			inv:set_list("dst", dst_copy)
