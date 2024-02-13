@@ -52,7 +52,12 @@ local function laser_node(pos, node, player)
 	def.on_dig(pos, node, player)
 end
 
-local keep_node = {air = true}
+local keep_node = {
+	["air"] = true,
+	["digtron:loaded_crate"] = true,
+	["digtron:loaded_locked_crate"] = true
+}
+
 local function can_keep_node(name)
 	if keep_node[name] ~= nil then
 		return keep_node[name]

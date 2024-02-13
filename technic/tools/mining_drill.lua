@@ -59,6 +59,24 @@ local function drill_dig_it0 (pos,player)
 	end
 	local node = minetest.get_node(pos)
 	if node.name == "air" or node.name == "ignore" then return end
+	if node.name == "digtron:loaded_locked_crate" or node.name == "digtron:loaded_crate" then return end -- causes corruption of metadata
+	if node.name == "default:lava_source" then return end
+	if node.name == "default:lava_flowing" then return end
+	if node.name == "drawers:acacia_wood4" then return end
+	if node.name == "drawers:acacia_wood2" then return end
+	if node.name == "drawers:acacia_wood1" then return end
+	if node.name == "drawers:aspen_wood4" then return end
+	if node.name == "drawers:aspen_wood2" then return end
+	if node.name == "drawers:aspen_wood1" then return end
+	if node.name == "drawers:junglewood4" then return end
+	if node.name == "drawers:junglewood4" then return end
+	if node.name == "drawers:junglewood4" then return end
+	if node.name == "drawers:pine_wood4" then return end
+	if node.name == "drawers:pine_wood2" then return end
+	if node.name == "drawers:pine_wood1" then return end
+	if node.name == "drawers:wood4" then return end
+	if node.name == "drawers:wood2" then return end
+	if node.name == "drawers:wood1" then return end
 	if node.name == mat.lava_source then return end
 	if node.name == mat.lava_flowing then return end
 	if node.name == mat.water_source then minetest.remove_node(pos) return end
