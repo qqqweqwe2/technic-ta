@@ -128,15 +128,18 @@ minetest.register_node("technic:injector", {
 			end
 			local stackwise = meta:get_string("mode") == "whole stacks"
 			for i,stack in ipairs(list) do
-				if not stack:is_empty() then
-					if stackwise then
-						technic.tube_inject_item(pos, pos, dir, stack:to_table())
-						stack:clear()
-					else
-						technic.tube_inject_item(pos, pos, dir, stack:take_item(1):to_table())
-					end
-					inv:set_stack("main", i, stack)
-					break
+                local name = stack:get_name() or "air"
+                if minetest.get_item_group(name, "bag") == 0 then
+				    if not stack:is_empty() then
+					    if stackwise then
+						    technic.tube_inject_item(pos, pos, dir, stack:to_table())
+						    stack:clear()
+					    else
+						    technic.tube_inject_item(pos, pos, dir, stack:take_item(1):to_table())
+					    end
+					    inv:set_stack("main", i, stack)
+					    break
+                    end
 				end
 			end
 		end
