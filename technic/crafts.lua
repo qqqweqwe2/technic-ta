@@ -143,6 +143,24 @@ minetest.register_craft({
 })
 
 minetest.register_craft({
+	output = 'technic:control_logic_unit_adv',
+	recipe = {
+		{'technic:fine_gold_wire', 'technic:fine_gold_wire', 'technic:fine_gold_wire'},
+		{'technic:silicon_wafer', 'technic:silicon_wafer', 'technic:silicon_wafer'},
+		{'default:copper_ingot', 'technic:chromium_ingot', 'default:copper_ingot'},
+	}
+})
+
+minetest.register_craft({
+	output = 'technic:control_logic_unit_gold',
+	recipe = {
+		{'technic:fine_gold_wire', 'technic:fine_gold_wire', 'technic:fine_gold_wire'},
+		{'technic:silicon_wafer', 'technic:silicon_wafer', 'technic:silicon_wafer'},
+		{'default:gold_ingot', 'technic:chromium_ingot', 'default:gold_ingot'},
+	}
+})
+
+minetest.register_craft({
 	output = 'technic:mixed_metal_ingot 9',
 	recipe = {
 		{'technic:stainless_steel_ingot', 'technic:stainless_steel_ingot', 'technic:stainless_steel_ingot'},

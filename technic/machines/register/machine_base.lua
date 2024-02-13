@@ -68,6 +68,18 @@ function technic.register_base_machine(nodename, data)
 			"list[context;upgrade2;2,3;1,1;]"..
 			"label[1,4;"..S("Upgrade Slots").."]"
 	end
+	if def.upgrade then
+		formspec = formspec..
+			"list[context;upgrade1;1,3;1,1;]"..
+			"list[context;upgrade2;2,3;1,1;]"..
+			"tooltip[0,0;0,0;GCLU_BEGIN]tooltip[0,0;0,0;GCLU_END]".. -- hidden tooltip use as a regex replace anchor for updates
+			"label[1,4;"..S("Upgrade Slots").."]"..
+			"listring[context;upgrade1]"..
+			"listring[current_player;main]"..
+			"listring[context;upgrade2]"..
+			"listring[current_player;main]"..
+			"tooltip[0,0;0,0;end]" -- hidden use as a regex replace anchor for updates
+	end
 
 	if minetest.get_modpath("mcl_formspec") then
 		formspec = formspec..
@@ -108,6 +120,40 @@ function technic.register_base_machine(nodename, data)
 	end
 	if def.insert_object then
 		tube.insert_object = def.insert_object
+	end
+
+	function update_formspec(meta,form_buttons)
+		local formspec_meta = meta:get_string("formspec")
+		local form_buttons = form_buttons or string.gsub(formspec_meta,".*tooltip.0,0;0,0;end.","")
+		formspec_meta = string.gsub(formspec_meta,"tooltip.0,0;0,0;end.*","").."tooltip[0,0;0,0;end]"
+
+		if meta:get_int("IS_GCLU") == 1 then
+			local replacement = ""..
+				"tooltip[0,0;0,0;GCLU_BEGIN]"..
+				"image[4.6,3.1;1,1;technic_control_logic_unit_gold.png]"..
+				"label[3.7,3.1;"..S("GCLU\nSettings").."]"..
+				"field[5.8,3.45;1.1,1;percent;;${GCLU_Percent}]"..
+				"field[6.8,3.45;1.1,1;wait;;${GCLU_Wait}]"..
+				"tooltip[5.5,2.95;1,1;"..S("For the Gold Control Logic Unit ONLY")..":"..
+				"\n"..
+					"\n\t"..S("The percent of the max stack size to reach before sending the stack")..""..
+					"\n\t"..S("between").." (0,100%)]"..
+				"tooltip[6.5,2.95;1,1;"..S("For the Gold Control Logic Unit ONLY")..":"..
+				"\n"..
+					"\n\t"..S("The max time (second) to wait before sending the stack")..""..
+					"\n\t"..S("between").." (2,3600s),"..
+					"\n\t "..S("'0' means no time-checking: be carefull if a stack never reach the percent, it will stay in the machine").."!"..
+				"\n"..
+					"\n\t"..S("EXAMPLE")..":"..
+					"\n\t\t "..S("if a stack never reachs the percent after x seconds, the stack is sent")..". ]"..
+				"label[5.55,2.9;"..S("Percent").."]"..
+				"label[6.55,2.9;"..S("Time (s)").."]"..
+				"tooltip[0,0;0,0;GCLU_END]"
+			meta:set_string("formspec", string.gsub(formspec_meta, "tooltip.0,0;0,0;GCLU_BEGIN.tooltip.0,0;0,0;GCLU_END.", replacement)..form_buttons)
+
+		else
+			meta:set_string("formspec", string.gsub(formspec_meta, "tooltip.0,0;0,0;GCLU_BEGIN.*tooltip.0,0;0,0;GCLU_END.", "tooltip[0,0;0,0;GCLU_BEGIN]tooltip[0,0;0,0;GCLU_END]")..form_buttons)
+		end
 	end
 
 	local run = function(pos, node)
@@ -241,6 +287,23 @@ function technic.register_base_machine(nodename, data)
 				)..pipeworks.button_label
 			end
 			meta:set_string("formspec", formspec..form_buttons)
+			local percent = tonumber(fields.percent)
+			local wait =  tonumber(fields.wait)
+
+			if percent then
+				if percent < 0 then percent = 0 
+				elseif percent > 100 then percent = 100 end
+				meta:set_int("GCLU_Percent",percent)
+			end
+
+			if wait then
+				if wait == 0 then
+					-- do nothing
+				elseif wait < 2 then wait = 2 
+				elseif wait > 3600 then wait = 3600 end
+				meta:set_int("GCLU_Wait",wait)
+			end		
+			update_formspec(meta,form_buttons)
 		end,
 	})
 
@@ -288,6 +351,23 @@ function technic.register_base_machine(nodename, data)
 				)..pipeworks.button_label
 			end
 			meta:set_string("formspec", formspec..form_buttons)
+			local percent = tonumber(fields.percent)
+			local wait =  tonumber(fields.wait)
+
+			if percent then
+				if percent < 0 then percent = 0 
+				elseif percent > 100 then percent = 100 end
+				meta:set_int("GCLU_Percent",percent)
+			end
+
+			if wait then
+				if wait == 0 then
+					-- do nothing
+				elseif wait < 2 then wait = 2 
+				elseif wait > 3600 then wait = 3600 end
+				meta:set_int("GCLU_Wait",wait)
+			end		
+			update_formspec(meta,form_buttons)
 		end,
 	})
 

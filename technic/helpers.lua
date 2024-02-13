@@ -312,3 +312,9 @@ function technic.get_charge_level(itemstack)
     if not meta then return nil end
     return meta:get_int(technic.technic_charge_key) or 0
 end
+
+function technic.set_charge_level(itemstack, level)
+    local meta = itemstack:get_meta()
+    if not meta then return nil end
+    return meta:set_int(technic.technic_charge_key, level)
+end
