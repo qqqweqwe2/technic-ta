@@ -40,6 +40,10 @@ function technic.register_base_machine(nodename, data)
 	local input_size = technic.recipes[typename].input_size
 	local tier = def.tier
 	local ltier = string.lower(tier)
+    if not name:find("lv") and not name:find("hv") then
+	    nodename = modname..":"..ltier.."_"..name
+	    texture_prefix = modname.."_"..ltier.."_"..name
+    end
 	local infotext_idle = S("@1 Idle", def.description)
 	local infotext_active = S("@1 Active", def.description)
 	local infotext_unpowered = S("@1 Unpowered", def.description)
