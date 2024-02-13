@@ -60,7 +60,7 @@ function technic.register_base_machine(nodename, data)
 	local formspec =
 		size..
 		"list[context;src;"..(4-input_size)..",1;"..input_size..",1;]"..
-		"list[context;dst;5,1;2,2;]"..
+		"list[context;dst;5,1;3,2;]"..
 		"label[0,0;"..def.description.."]"
 	if def.upgrade then
 		formspec = formspec..
@@ -211,7 +211,7 @@ function technic.register_base_machine(nodename, data)
 			meta:set_string("formspec", formspec..form_buttons)
 			local inv = meta:get_inventory()
 			inv:set_size("src", input_size)
-			inv:set_size("dst", 4)
+			inv:set_size("dst", 6)
 			inv:set_size("upgrade1", 1)
 			inv:set_size("upgrade2", 1)
 		end,
