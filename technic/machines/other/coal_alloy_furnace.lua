@@ -13,7 +13,7 @@ minetest.register_craft({
 	}
 })
 
-local machine_name = S("Fuel-Fired Alloy Furnace")
+local machine_name = ("Fuel-Fired Alloy Furnace")
 local size = minetest.get_modpath("mcl_formspec") and "size[9,9]" or "size[8,9]"
 local formspec =
 	size..

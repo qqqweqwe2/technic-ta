@@ -13,7 +13,7 @@ minetest.register_craft({
 	}
 })
 
-local machine_name = S("Water Extractor")
+local machine_name = ("Water Extractor")
 local formspec =
 	"size[8,9]"..
 	"label[0,0;"..machine_name.."]"..

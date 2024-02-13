@@ -15,7 +15,7 @@ minetest.register_craft({
 	}
 })
 
-local machine_name = S("Solar Furnace")
+local machine_name = ("Solar Furnace")
 local formspec =
 	"size[8,9]"..
 	"label[0,0;"..machine_name.."]"..
