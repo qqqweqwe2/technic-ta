@@ -277,11 +277,29 @@ function technic.process_recipe(recipe, inv)
 	local dst_copy = inv:get_list("dst")
     if type(recipe.output) == "string" then recipe.output = {recipe.output} end
 	for _,item in ipairs(recipe.output) do
+        local name = ItemStack(item):get_name()
+        local new_output = {}
+		if name:sub(1, 4) == "rnd:" then
+			for _,v in ipairs(resolve_rnd_recursive(name)) do
+				table.insert(new_output, v)
+			end
+            for _,item2 in ipairs(new_output) do
+                if not inv:room_for_item("dst", ItemStack(item2)) then
+			        inv:set_list("dst", dst_copy)
+			        return false
+		        end
+		        inv:add_item("dst", item2)
+	        end
+        end
+		if name:sub(1, 4) ~= "rnd:" then
 		if not inv:room_for_item("dst", ItemStack(item)) then
 			inv:set_list("dst", dst_copy)
 			return false
 		end
-		inv:add_item("dst", item)
+        end
+		if name:sub(1, 4) ~= "rnd:" then
+		    inv:add_item("dst", item)
+        end
 	end
 	inv:set_list("src", recipe.new_input)
 	return true
