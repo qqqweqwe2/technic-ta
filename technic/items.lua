@@ -189,3 +189,17 @@ for p = 0, 35 do
 	end
 end
 
+minetest.register_craftitem("technic:blocker", {
+	description = S("Blocker item - Prevents slots in machines from being filled but lets the recipes work as normal (if applicable)"),
+	inventory_image = "technic_blocker.png",
+    stack_max = 1,
+})
+
+minetest.register_craft({
+	type = "shaped",
+	output = "technic:blocker",
+	recipe = {
+		{"octu:octu", "underch:ruby"},
+		{"underch:ruby", "octu:octu"},
+	}
+})
