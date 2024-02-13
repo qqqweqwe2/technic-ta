@@ -47,5 +47,6 @@ minetest.override_item("technic:hv_sawmill", {
 			{-1/2, -1/2, -1/2, 1/2, 7/32, 1/2},
 		},
 	},
+    tiles = {"technic_hv_sawmill_top.png","technic_hv_sawmill_bottom.png","technic_hv_sawmill_side.png","technic_hv_sawmill_side.png","technic_hv_sawmill_back.png","technic_hv_sawmill_front.png"},
 })
 end)
