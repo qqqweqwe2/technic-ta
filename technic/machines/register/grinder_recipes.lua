@@ -1,11 +1,10 @@
 
 local S = technic.getter
-local mat = technic.materials
 
-technic.register_recipe_type("grinding", {
+technic.register_recipe_type("grinding", { 
 	description = S("Grinding"),
-	icon = "technic_hv_grinder_front.png",
-})
+	icon = "technic_recipe_icon_grinding.png", })
+
 
 function technic.register_grinder_recipe(data)
 	data.time = data.time or 3
@@ -14,56 +13,118 @@ end
 
 local recipes = {
 	-- Dusts
-	{mat.coal_lump,          "technic:coal_dust 2"},
-	{mat.copper_lump,        "technic:copper_dust 2"},
-	{mat.desert_stone,       mat.desert_sand},
-	{mat.gold_lump,          "technic:gold_dust 2"},
-	{mat.iron_lump,          "technic:wrought_iron_dust 2"},
-	{mat.tin_lump,           "technic:tin_dust 2"},
+	{"default:coal_lump",          "technic:coal_dust 2"},
+	{"default:copper_lump",        "technic:copper_dust 2"},
+	{"default:desert_stone",       "default:desert_sand"},
+	{"default:gold_lump",          "technic:gold_dust 2"},
+	{"default:iron_lump",          "technic:wrought_iron_dust 2"},
+	{"default:tin_lump",           "technic:tin_dust 2"},
 	{"technic:chromium_lump",      "technic:chromium_dust 2"},
 	{"technic:uranium_lump",       "technic:uranium_dust 2"},
 	{"technic:zinc_lump",          "technic:zinc_dust 2"},
 	{"technic:lead_lump",          "technic:lead_dust 2"},
 	{"technic:sulfur_lump",        "technic:sulfur_dust 2"},
-	{mat.stone,              "technic:stone_dust"},
-	{mat.sand,               "technic:stone_dust"},
-	{mat.desert_sand,        "technic:stone_dust"},
-	{mat.silver_sand,        "technic:stone_dust"},
+	{"default:stone",              "technic:stone_dust"},
+	{"default:sand",               "technic:stone_dust"},
+	{"default:desert_sand",        "technic:stone_dust"},
+	{"default:silver_sand",        "technic:stone_dust"},
+	-- recycle some items:
+	{"xpanes:pane_flat 8",         "vessels:glass_fragments 3"},
+	{"doors:door_glass",           "vessels:glass_fragments 6"},
+	{"doors:door_wood",            "technic:sawdust 24"},
+	{"doors:trapdoor",             "technic:sawdust 12"},
+	{"doors:trapdoor_steel",       "technic:wrought_iron_dust 4"},
+	{"doors:door_obsidian_glass",  "default:obsidian_shard 6"},
+	{"doors:door_steel",           "technic:wrought_iron_dust 6"},
+	{"default:sign_wall_steel",    "technic:wrought_iron_dust 2"},
+	{"default:sign_wall_wood",     "technic:sawdust 8"},
 
 	-- Other
-	{mat.cobble,           mat.gravel},
-	{mat.gravel,           mat.sand},
-	{mat.sandstone,        mat.sand.." 2"}, -- reverse recipe can be found in the compressor
-	{mat.desert_sandstone, mat.desert_sand.." 2"}, -- reverse recipe can be found in the compressor
-	{mat.silver_sandstone, mat.silver_sand.." 2"}, -- reverse recipe can be found in the compressor
+	{"default:cobble",           "default:gravel"},
+	{"default:gravel",           "default:sand"},
+	{"default:sandstone",        "default:sand 2"}, -- reverse recipe can be found in the compressor
+	{"technic:stone_dust",      "default:silver_sand"},
+	{"default:desert_sandstone", "default:desert_sand 2"}, -- reverse recipe can be found in the compressor
+	{"default:silver_sandstone", "default:silver_sand 2"}, -- reverse recipe can be found in the compressor
 
-	{mat.ice,              mat.snowblock},
+	{"default:ice",              "default:snowblock"},
+	{"default:desert_sandstone","default:desert_sand 2"},
 }
+
+--[[
+-- defuse the sandstone -> 4 sand recipe to avoid infinite sand bugs (also consult the inverse compressor recipe)
+minetest.clear_craft({
+	recipe = {
+		{"default:sandstone"}
+	},
+})
+minetest.clear_craft({
+	recipe = {
+		{"default:desert_sandstone"}
+	},
+})
+minetest.clear_craft({
+	recipe = {
+		{"default:silver_sandstone"}
+	},
+})
+]]
 
 if minetest.get_modpath("ethereal") then
 	-- the density of charcoal is ~1/10 of coal, otherwise it's the same graphitic carbon
 	table.insert(recipes, {"ethereal:charcoal_lump 5", "technic:coal_dust 1"})
 end
 
--- defuse the sandstone -> 4 sand recipe to avoid infinite sand bugs (also consult the inverse compressor recipe)
-minetest.clear_craft({
-	recipe = {
-		{mat.sandstone}
-	},
-})
-minetest.clear_craft({
-	recipe = {
-		{mat.desert_sandstone}
-	},
-})
-minetest.clear_craft({
-	recipe = {
-		{mat.silver_sandstone}
-	},
-})
+if minetest.get_modpath("bonemeal") then
+	table.insert(recipes, {"bonemeal:bone", "bonemeal:bonemeal 8"})
+end
+
+if minetest.get_modpath("moreblocks") then
+	table.insert(recipes, {"moreblocks:cobble_compressed", "default:gravel 9"})
+	-- there is no other place to throw in the cooking recipe
+	minetest.register_craft({
+		type = "cooking",
+		cooktime = 5,
+		output = "default:stone 9",
+		recipe = "moreblocks:cobble_compressed"
+      })
+end
+
 
 if minetest.get_modpath("farming") then
-	table.insert(recipes, {mat.seed_wheat,   "farming:flour 1"})
+	table.insert(recipes, {"farming:seed_wheat",   "farming:flour 1"})
+	table.insert(recipes, {"farming:seed_barley",   "farming:flour 1"})
+	
+	-- added by dhausmig
+	if minetest.registered_items["farming:corn"] ~= nil then
+		minetest.register_craftitem("technic:cornmeal", {
+			description = S("Corn Meal"),
+			inventory_image = "technic_cornmeal.png",
+		})
+		minetest.register_craftitem("technic:cornbread", {
+			description = S("Cornbread"),
+			inventory_image = "technic_cornbread.png",
+			on_use = minetest.item_eat(8),
+      })
+
+      minetest.register_craft({
+		type = "cooking",
+		cooktime = 10,
+		output = "technic:cornbread",
+		recipe = "technic:cornmeal"
+      })
+
+      table.insert(recipes, {"farming:corn",   "technic:cornmeal 2"})
+	-- end of dhausmig's addition
+	end
+	
+	if farming.mod and (farming.mod == "redo" or farming.mod == "undo") then
+		table.insert(recipes, {"farming:seed_oat",   "farming:flour 1"})
+		table.insert(recipes, {"farming:seed_rye",   "farming:flour 1"})
+		table.insert(recipes, {"farming:rice",       "farming:rice_flour 1"})
+		table.insert(recipes, {"farming:seed_rice",  "farming:rice_flour 1"})
+	end
+	
 end
 
 if minetest.get_modpath("moreores") then
@@ -92,7 +153,7 @@ local function register_dust(name, ingot)
 	local lname = string.lower(name)
 	lname = string.gsub(lname, ' ', '_')
 	minetest.register_craftitem("technic:"..lname.."_dust", {
-		description = S("@1 Dust", S(name)),
+		description = name.." Dust",
 		inventory_image = "technic_"..lname.."_dust.png",
 	})
 	if ingot then
@@ -107,21 +168,20 @@ end
 
 -- Sorted alphibeticaly
 register_dust("Brass",           "basic_materials:brass_ingot")
-register_dust("Bronze",          mat.bronze_ingot)
+register_dust("Bronze",          "default:bronze_ingot")
 register_dust("Carbon Steel",    "technic:carbon_steel_ingot")
 register_dust("Cast Iron",       "technic:cast_iron_ingot")
-register_dust("Chernobylite",    "technic:chernobylite_block")
 register_dust("Chromium",        "technic:chromium_ingot")
 register_dust("Coal",            nil)
-register_dust("Copper",          mat.copper_ingot)
+register_dust("Copper",          "default:copper_ingot")
 register_dust("Lead",            "technic:lead_ingot")
-register_dust("Gold",            mat.gold_ingot)
-register_dust("Mithril",         mat.mithril_ingot)
-register_dust("Silver",          mat.silver_ingot)
+register_dust("Gold",            "default:gold_ingot")
+register_dust("Mithril",         "moreores:mithril_ingot")
+register_dust("Silver",          "moreores:silver_ingot")
 register_dust("Stainless Steel", "technic:stainless_steel_ingot")
-register_dust("Stone",           mat.stone)
+register_dust("Stone",           "default:stone")
 register_dust("Sulfur",          nil)
-register_dust("Tin",             mat.tin_ingot)
+register_dust("Tin",             "default:tin_ingot")
 register_dust("Wrought Iron",    "technic:wrought_iron_ingot")
 register_dust("Zinc",            "technic:zinc_ingot")
 if minetest.get_modpath("gloopores") or minetest.get_modpath("glooptest") then
@@ -180,3 +240,5 @@ if minetest.get_modpath("gloopores") or minetest.get_modpath("glooptest") then
 		burntime = 37.5,
 	})
 end
+
+minetest.register_alias_force("technic:chernobylite_dust", "technic:uranium_dust")

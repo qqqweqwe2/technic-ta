@@ -11,9 +11,9 @@ local mat = technic.materials
 minetest.register_craft({
 	output = 'technic:geothermal',
 	recipe = {
-		{'technic:granite',          mat.diamond,        'technic:granite'},
+		{'underch:granite',          mat.diamond,        'underch:granite'},
 		{'basic_materials:copper_wire', 'technic:machine_casing', 'basic_materials:copper_wire'},
-		{'technic:granite',          'technic:lv_cable',       'technic:granite'},
+		{'underch:granite',          'technic:lv_cable',       'underch:granite'},
 	},
 	replacements = {
 		{"basic_materials:copper_wire", "basic_materials:empty_spool"},

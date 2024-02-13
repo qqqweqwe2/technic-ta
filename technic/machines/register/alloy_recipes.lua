@@ -14,45 +14,58 @@ function technic.register_alloy_recipe(data)
 end
 
 local recipes = {
-	{"technic:copper_dust 7",         "technic:tin_dust",           mat.bronze_ingot.." 8", 12},
-	{mat.copper_ingot.." 7",        mat.tin_ingot,          mat.bronze_ingot.." 8", 12},
-	{"technic:wrought_iron_dust 2",   "technic:coal_dust",          "technic:carbon_steel_ingot 2", 6},
+	{"technic:copper_dust 7",         "technic:tin_dust",           "technic:bronze_dust 8", 12},
+	{"default:copper_ingot 7",        "default:tin_ingot",          "default:bronze_ingot 8", 12},
+	{"technic:wrought_iron_dust 2",   "technic:coal_dust",          "technic:carbon_steel_dust 2", 6},
 	{"technic:wrought_iron_ingot 2",  "technic:coal_dust",          "technic:carbon_steel_ingot 2", 6},
-	{"technic:carbon_steel_dust 4",   "technic:chromium_dust",      "technic:stainless_steel_ingot 5", 7.5},
+	{"technic:carbon_steel_dust 2",   "technic:coal_dust",          "technic:cast_iron_dust 2", 6},
+	{"technic:carbon_steel_ingot 2",  "technic:coal_dust",          "technic:cast_iron_ingot 2", 6},
+	{"technic:carbon_steel_dust 4",   "technic:chromium_dust",      "technic:stainless_steel_dust 5", 7.5},
 	{"technic:carbon_steel_ingot 4",  "technic:chromium_ingot",     "technic:stainless_steel_ingot 5", 7.5},
-	{"technic:copper_dust 2",         "technic:zinc_dust",          "basic_materials:brass_ingot 3"},
-	{mat.copper_ingot.." 2",        "technic:zinc_ingot",         "basic_materials:brass_ingot 3"},
-	{mat.sand.." 2",                "technic:coal_dust 2",        "technic:silicon_wafer"},
+	{"technic:copper_dust 2",         "technic:zinc_dust",          "technic:brass_dust 3"},
+	{"default:copper_ingot 2",        "technic:zinc_ingot",         "basic_materials:brass_ingot 3"},
+	{"default:sand 2",                "technic:coal_dust 2",        "technic:silicon_wafer"},
 	{"technic:silicon_wafer",         "technic:gold_dust",          "technic:doped_silicon_wafer"},
 	-- from https://en.wikipedia.org/wiki/Carbon_black
 	-- The highest volume use of carbon black is as a reinforcing filler in rubber products, especially tires.
-	-- "[Compounding a] pure gum vulcanizate … with 50% of its weight of carbon black
-	-- improves its tensile strength and wear resistance …"
-	{"technic:raw_latex 4",           "technic:coal_dust 2",        "technic:rubber 6", 2},
-	{"technic:raw_latex 2",           mat.coal_lump,        "technic:rubber 2", 2},
-	{mat.ice,                   mat.bucket_empty,        mat.bucket_water, 1 },
-	{mat.obsidian,              mat.bucket_empty,        mat.bucket_lava, 1 },
+	-- "[Compounding a] pure gum vulcanizate … with 50% of its weight of carbon black improves its tensile strength and wear resistance …"
+	{"technic:raw_latex 4",           "technic:coal_dust 2",        "technic:rubber 6",                  2},
+	{"technic:raw_latex 3",           "technic:sulfur_dust 1",      "technic:latex_foam",                2},
+	{"default:ice", 		  "bucket:bucket_empty",        "bucket:bucket_water", 1 },
+	-- straightforward way to get red stone
+	{"default:stone",                 "dye:red",                    "default:desert_stone",              2},
 }
 
 if minetest.get_modpath("ethereal") then
-	table.insert(recipes, {mat.clay, mat.dye_red,    "bakedclay:red"})
-	table.insert(recipes, {mat.clay, mat.dye_orange, "bakedclay:orange"})
-	table.insert(recipes, {mat.clay, mat.dye_grey,   "bakedclay:grey"})
+	table.insert(recipes, {"ethereal:crystal_spike", "ethereal:fire_dust",   "default:mese_crystal 2"})
+	table.insert(recipes, {"ethereal:crystal_spike", "default:mese_crystal", "ethereal:crystal_ingot"})
+	if not minetest.get_modpath("bakedclay") then
+		table.insert(recipes, {"default:clay", "dye:red",    "bakedclay:red",    3})
+		table.insert(recipes, {"default:clay", "dye:orange", "bakedclay:orange", 3})
+		table.insert(recipes, {"default:clay", "dye:grey",   "bakedclay:grey",   3})
+	end
+	if minetest.get_modpath("bonemeal") then
+		table.insert(recipes, {"default:sand", "bonemeal:mulch", "ethereal:sandy"})
+		table.insert(recipes, {"default:sand", "bonemeal:bonemeal", "ethereal:sandy"})
+	end
 end
 
-if minetest.get_modpath("digilines") then
-	table.insert(recipes,
-		{"technic:lv_cable",         "digilines:wire_std_00000000 2", "technic:lv_digi_cable", 18})
-	table.insert(recipes,
-		{"technic:lv_cable_plate_1", "digilines:wire_std_00000000 2", "technic:lv_digi_cable_plate_1", 18})
-	table.insert(recipes,
-		{"technic:mv_cable",         "digilines:wire_std_00000000 2", "technic:mv_digi_cable", 18})
-	table.insert(recipes,
-		{"technic:mv_cable_plate_1", "digilines:wire_std_00000000 2", "technic:mv_digi_cable_plate_1", 18})
-	table.insert(recipes,
-		{"technic:hv_cable",         "digilines:wire_std_00000000 2", "technic:hv_digi_cable", 18})
-	table.insert(recipes,
-		{"technic:hv_cable_plate_1", "digilines:wire_std_00000000 2", "technic:hv_digi_cable_plate_1", 18})
+if minetest.get_modpath("moreblocks") then
+	table.insert(recipes, {"default:stone", "default:steel_ingot", "moreblocks:iron_stone 4", 3})
+	table.insert(recipes, {"default:stone", "default:coal_lump", "moreblocks:coal_stone 4", 3})
+end
+
+if minetest.get_modpath("bakedclay") then
+	
+	local clay = {"white", "grey", "black", "red", "yellow",
+	              "green", "cyan", "blue", "magenta", "orange", 
+	              "violet", "brown", "pink", "dark_grey", "dark_green"}
+
+	-- the recipe of the bakedclay mod yields 8 blocks, so we'll do two times better
+	for _,c in ipairs(clay) do
+		table.insert(recipes, {"default:clay 8", "dye:" .. c, "bakedclay:" .. c .. " 16"})
+	end
+	
 end
 
 for _, data in pairs(recipes) do

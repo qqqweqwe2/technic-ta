@@ -37,7 +37,7 @@ minetest.register_craft({
 	}
 })
 end
-minetest.register_craft({
+--[[minetest.register_craft({
 	output = 'technic:blast_resistant_concrete 5',
 	recipe = {
 		{'technic:concrete','technic:composite_plate','technic:concrete'},
@@ -63,7 +63,7 @@ minetest.register_craft({
 		{'technic:concrete','technic:composite_plate','technic:concrete'},
 	}
 })
-
+]]
 
 minetest.register_node(":technic:blast_resistant_concrete", {
 	description = S("Blast-resistant Concrete Block"),
