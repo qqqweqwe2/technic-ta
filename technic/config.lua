@@ -24,7 +24,7 @@ local defaults = {
 	quarry_dig_particles = "false",
 
 	-- Power network and general options
-	switch_off_delay_seconds = "1800",
+	switch_off_delay_seconds = "900",
 	network_overload_reset_time = "20",
 	admin_priv = "server",
 	enable_corium_griefing = "false",
