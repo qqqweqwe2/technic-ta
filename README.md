@@ -1,3 +1,7 @@
+Forked from: [https://github.com/mt-mods/technic/](https://github.com/mt-mods/technic/)
+
+Fork commit: 04b0663d844ac70c44dd918e38942290afc6d5ef
+
 Technic
 -----------------
 
