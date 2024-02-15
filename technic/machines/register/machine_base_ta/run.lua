@@ -3,6 +3,25 @@ local function round(v)
     return math.floor(v + 0.5)
 end
 
+local RND_SEED_NAME = "rnd_seed"
+
+local function start_random_seed(meta)
+    if not meta:contains(RND_SEED_NAME) then
+        meta:set_float(RND_SEED_NAME, minetest.get_us_time() + math.random())
+        meta:mark_as_private(RND_SEED_NAME)
+    end
+    local rnd_seed = meta:get_float(RND_SEED_NAME)
+    math.randomseed(rnd_seed)
+    return rnd_seed
+end
+
+local function stop_random_seed(meta, rnd_seed)
+    if rnd_seed then
+        math.randomseed(minetest.get_us_time())
+        meta:set_float("rnd_seed", minetest.get_us_time() + math.random())
+    end
+end
+
 return function(registration_context)
     return function(pos, node)
         local meta = minetest.get_meta(pos)
@@ -29,6 +48,7 @@ return function(registration_context)
         if powered then
             meta:set_int("src_time", meta:get_int("src_time") + round(registration_context.def.speed * 10))
         end
+        local rnd_seed = start_random_seed(meta)
         while true do
             local recipe = inv:get_list("src") and
                 technic.get_recipe(registration_context.def.typename, inv:get_list("src"))
@@ -48,6 +68,7 @@ return function(registration_context)
                     technic.swap_node(pos, registration_context.nodename)
                     meta:set_string("infotext", registration_context.infotext_unpowered)
                 end
+                stop_random_seed(meta, rnd_seed)
                 return
             end
             if not technic.process_recipe(recipe, inv) then
@@ -55,6 +76,7 @@ return function(registration_context)
                 meta:set_string("infotext", registration_context.infotext_idle)
                 meta:set_int(registration_context.def.tier .. "_EU_demand", 0)
                 meta:set_int("src_time", round(recipe.time * 10))
+                stop_random_seed(meta, rnd_seed)
                 return
             end
             meta:set_int("src_time", meta:get_int("src_time") - round(recipe.time * 10))
