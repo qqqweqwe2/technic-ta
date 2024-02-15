@@ -55,10 +55,7 @@ local function on_machine_upgrade(meta, stack)
         end
         if meta:get_int("GCLU_Wait") == nil then
 		    meta:set_int("GCLU_Wait",30)
-        end
-		--show form
-		update_formspec(meta)
-
+		end
 		return 1
 	elseif stack_name ~= "technic:control_logic_unit"
 	and stack_name ~= "technic:control_logic_unit_adv"
@@ -81,11 +78,7 @@ local function on_machine_downgrade(meta, stack, list)
 			elseif stack:get_name() == "technic:control_logic_unit_gold" then
 				meta:set_string("IS_GCLU",nil)
 				meta:set_string("GCLU_Percent",nil) 
-				meta:set_string("GCLU_Wait",nil)
-		
-				--hide form
-				update_formspec(meta)
-				
+				meta:set_string("GCLU_Wait", nil)
 			end
 		end
 	end

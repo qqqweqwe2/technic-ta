@@ -12,7 +12,8 @@ dofile(path.."/generator.lua")
 
 -- API for machines
 dofile(path.."/recipes.lua")
-dofile(path.."/machine_base.lua")
+--dofile(path.."/machine_base.lua")
+dofile(path.."/machine_base_ta/init.lua")
 
 -- Recipes
 dofile(path.."/alloy_recipes.lua")
