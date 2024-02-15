@@ -5,8 +5,12 @@ return function(registration_context)
 
     local formspec =
         formspec_size ..
-        "list[context;src;" ..
-        (4 - registration_context.input_size) .. ",1;" .. registration_context.input_size .. ",1;]" ..
+        "label[" .. (4 - math.min(registration_context.input_size, 4)) .. ",0.6;" .. S("Input") .. "]" ..
+        "list[context;src;"
+        .. (4 - math.min(registration_context.input_size, 4)) .. ",1;"
+        .. math.min(registration_context.input_size, 4) .. ","
+        .. math.ceil(registration_context.input_size / 4) .. ";]" ..
+        "label[5,0.6;" .. S("Output") .. "]" ..
         "list[context;dst;5,1;2,2;]" ..
         "label[0,0;" .. registration_context.def.description .. "]"
     if registration_context.def.upgrade then
