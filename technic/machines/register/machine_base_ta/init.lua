@@ -44,7 +44,7 @@ local function make_registration_context(nodename, data)
 
     return {
         texture_prefix = texture_prefix,
-        colon = colon,
+        colon = ":",
         def = def,
         modname = modname,
         nodename = nodename,
