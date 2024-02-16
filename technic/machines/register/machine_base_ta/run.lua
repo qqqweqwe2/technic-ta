@@ -1,17 +1,12 @@
 local S = technic.getter
+local path = technic.modpath .. "/machines/register/machine_base_ta"
+local machine_digilines = assert(loadfile(path .. "/digilines.lua"))()
+local machine_state = assert(loadfile(path .. "/state.lua"))()
+
+local RND_SEED_NAME = "rnd_seed"
 local function round(v)
     return math.floor(v + 0.5)
 end
-
-local STATE_META_NAME = "machine_state"
-local STATE = {
-    UNPOWERED = "Unpowered",
-    IDLE = "Idle",
-    ACTIVE = "Active",
-    STUCK = "Stuck",
-}
-
-local RND_SEED_NAME = "rnd_seed"
 
 local function start_random_seed(meta)
     if not meta:contains(RND_SEED_NAME) then
@@ -30,17 +25,16 @@ local function stop_random_seed(meta, rnd_seed)
     end
 end
 
-local function set_state(meta, state)
-    meta:set_string(STATE_META_NAME, state)
-end
-
 local function is_stack_empty(inv_list)
-    return next(inv_list) == nil
+    return #inv_list == 0 or (inv_list[1]:get_count() == 0 and #inv_list == 1)
 end
 
 return function(registration_context)
     return function(pos, node)
         local meta = minetest.get_meta(pos)
+        if not meta then return end
+
+        machine_digilines.run(registration_context, pos, node)
         local inv = meta:get_inventory()
         local eu_input = meta:get_int(registration_context.def.tier .. "_EU_input")
         local machine_demand = registration_context.def.demand
@@ -49,7 +43,7 @@ return function(registration_context)
         if not eu_input then
             meta:set_int(registration_context.def.tier .. "_EU_demand", machine_demand[1])
             meta:set_int(registration_context.def.tier .. "_EU_input", 0)
-            set_state(meta, STATE.UNPOWERED)
+            machine_state.set(meta, machine_state.STATE.UNPOWERED)
             return
         end
 
@@ -74,7 +68,9 @@ return function(registration_context)
                 meta:set_string("infotext", registration_context.infotext_idle)
                 meta:set_int(registration_context.def.tier .. "_EU_demand", 0)
                 meta:set_int("src_time", 0)
-                set_state(meta, is_stack_empty(inv:get_list("src")) and STATE.IDLE or STATE.STUCK)
+                machine_state.set(meta, is_stack_empty(inv:get_list("src"))
+                    and machine_state.STATE.IDLE
+                    or machine_state.STATE.STALLED)
                 return
             end
             meta:set_int(registration_context.def.tier .. "_EU_demand", machine_demand[EU_upgrade + 1])
@@ -85,7 +81,9 @@ return function(registration_context)
                 if not powered then
                     technic.swap_node(pos, registration_context.nodename)
                     meta:set_string("infotext", registration_context.infotext_unpowered)
-                    set_state(meta, STATE.UNPOWERED)
+                    machine_state.set(meta, machine_state.STATE.NOT_ENOUGH_ENERGY)
+                    stop_random_seed(meta, rnd_seed)
+                    return
                 end
                 stop_random_seed(meta, rnd_seed)
                 return
@@ -96,11 +94,13 @@ return function(registration_context)
                 meta:set_int(registration_context.def.tier .. "_EU_demand", 0)
                 meta:set_int("src_time", round(recipe.time * 10))
                 stop_random_seed(meta, rnd_seed)
-                set_state(meta, is_stack_empty(inv:get_list("src")) and STATE.IDLE or STATE.STUCK)
+                machine_state.set(meta, is_stack_empty(inv:get_list("src"))
+                    and machine_state.STATE.IDLE
+                    or machine_state.STATE.STALLED)
                 return
             end
             meta:set_int("src_time", meta:get_int("src_time") - round(recipe.time * 10))
-            set_state(meta, STATE.ACTIVE)
+            machine_state.set(meta, machine_state.STATE.ACTIVE)
         end
     end
 end

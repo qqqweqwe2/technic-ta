@@ -1,6 +1,7 @@
 local S = technic.getter
 local path = technic.modpath .. "/machines/register/machine_base_ta"
 local gold_unit = assert(loadfile(path .. "/gold_unit.lua"))()
+local machine_digilines = assert(loadfile(path .. "/digilines.lua"))()
 
 local fs_helpers = pipeworks.fs_helpers
 
@@ -128,5 +129,6 @@ return function(registration_context, pos)
     formspec[#formspec + 1] = get_form_buttons_formspec(pos)
     formspec[#formspec + 1] = gold_unit.get_formspec(pos)
     formspec[#formspec + 1] = "container_end[]"
+    formspec[#formspec + 1] = machine_digilines.get_formspec(pos)
     return table.concat(formspec, "")
 end

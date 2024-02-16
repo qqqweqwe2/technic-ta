@@ -2,6 +2,8 @@ local path = technic.modpath .. "/machines/register/machine_base_ta"
 local run_func = assert(loadfile(path .. "/run.lua"))()
 local get_formspec_func = assert(loadfile(path .. "/formspec.lua"))()
 local gold_unit = assert(loadfile(path .. "/gold_unit.lua"))()
+local machine_digilines = assert(loadfile(path .. "/digilines.lua"))()
+local machine_state = assert(loadfile(path .. "/state.lua"))()
 local fs_helpers = pipeworks.fs_helpers
 local tube_entry = "^pipeworks_tube_connection_metallic.png"
 
@@ -19,6 +21,7 @@ local on_receive_fields = function(registration_context, pos, formname, fields, 
     end
 
     gold_unit.on_receive_fields(registration_context, pos, formname, fields, sender)
+    machine_digilines.on_receive_fields(registration_context, pos, formname, fields, sender)
     update_formspec(registration_context, pos)
 end
 
@@ -32,6 +35,7 @@ local on_construct = function(registration_context, pos)
     inv:set_size("dst", registration_context.output_size)
     inv:set_size("upgrade1", 1)
     inv:set_size("upgrade2", 1)
+    machine_state.set(meta, machine_state.STATE.STARTING)
     update_formspec(registration_context, pos)
 end
 
@@ -52,6 +56,7 @@ local function register(registration_context, data)
             registration_context.texture_prefix .. front_tile
         },
         paramtype2 = "facedir",
+        digiline = machine_digilines.get_node_def_field(),
         drop = data.drop,
         groups = data.groups,
         _mcl_blast_resistance = 1,
