@@ -5,6 +5,40 @@
 
 minetest.register_alias("geothermal", "technic:geothermal")
 
+technic.geothermal_supply_levels = {
+	-- 1 water and 1 lava
+	[11] = {
+		production_level = 25,
+		eu_supply = 200
+	},
+	-- 2 water and 1 lava
+	[21] = {
+		production_level = 50,
+		eu_supply = 400
+	},
+	-- 3 water and 1 lava
+	[31] = {
+		production_level = 50,
+		eu_supply = 500
+	},
+	-- 1 water and 2 lava
+	[12] = {
+		production_level = 75,
+		eu_supply = 600
+
+	},
+	-- 1 water and 3 lava
+	[13] = {
+		production_level = 75,
+		eu_supply = 700
+
+	},
+	-- 2 water and 2 lava
+	[22] = {
+		production_level = 100,
+		eu_supply = 800
+	}
+}
 local S = technic.getter
 local mat = technic.materials
 
@@ -36,8 +70,10 @@ local run = function(pos, node)
 	local meta             = minetest.get_meta(pos)
 	local water_nodes      = 0
 	local lava_nodes       = 0
-	local production_level = 0
-	local eu_supply        = 0
+	local supply_level = {
+		production_level = 0,
+		eu_supply = 0
+	}
 
 	-- Correct positioning is water on one side and lava on the other.
 	-- The two cannot be adjacent because the lava the turns into obsidian or rock.
@@ -61,23 +97,22 @@ local run = function(pos, node)
 		if check == 2 then lava_nodes  = lava_nodes  + 1 end
 	end
 
-	if water_nodes == 1 and lava_nodes == 1 then production_level =  25; eu_supply = 50 end
-	if water_nodes == 2 and lava_nodes == 1 then production_level =  50; eu_supply = 100 end
-	if water_nodes == 1 and lava_nodes == 2 then production_level =  75; eu_supply = 200 end
-	if water_nodes == 2 and lava_nodes == 2 then production_level = 100; eu_supply = 300 end
+	if technic.geothermal_supply_levels[water_nodes * 10 + lava_nodes] then
+		supply_level = technic.geothermal_supply_levels[water_nodes * 10 + lava_nodes]
+	end
 
-	if production_level > 0 then
-		meta:set_int("LV_EU_supply", eu_supply)
+	if supply_level.production_level > 0 then
+		meta:set_int("LV_EU_supply", supply_level.eu_supply)
 	end
 
 	meta:set_string("infotext", S("@1 (@2% Efficiency)",
-		S("Geothermal @1 Generator", S("LV")), production_level))
+		S("Geothermal @1 Generator", S("LV")), supply_level.production_level))
 
-	if production_level > 0 and minetest.get_node(pos).name == "technic:geothermal" then
+	if supply_level.production_level > 0 and minetest.get_node(pos).name == "technic:geothermal" then
 		technic.swap_node (pos, "technic:geothermal_active")
 		return
 	end
-	if production_level == 0 then
+	if supply_level.production_level == 0 then
 		technic.swap_node(pos, "technic:geothermal")
 		meta:set_int("LV_EU_supply", 0)
 	end
