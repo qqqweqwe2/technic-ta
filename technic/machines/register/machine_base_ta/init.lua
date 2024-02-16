@@ -41,6 +41,11 @@ local function make_registration_context(nodename, data)
         groups.tubedevice = 1
         groups.tubedevice_receiver = 1
     end
+    local output_size = def.output_size and tonumber(def.output_size) or 6
+    if output_size > 9 then
+        output_size = 9
+    end
+    -- registration_context.output_size
 
     return {
         texture_prefix = texture_prefix,
@@ -51,6 +56,7 @@ local function make_registration_context(nodename, data)
         groups = groups,
         active_groups = table.copy(groups),
         input_size = technic.recipes[def.typename].input_size,
+        output_size = output_size,
         ltier = ltier,
         infotext_idle = S("@1 Idle", def.description),
         infotext_active = S("@1 Active", def.description),
@@ -60,6 +66,5 @@ end
 
 function technic.register_base_machine(nodename, data)
     local registration_context = make_registration_context(nodename, data)
-
     register_func(registration_context)
-end -- End registration
+end

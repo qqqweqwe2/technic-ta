@@ -12,15 +12,15 @@ function gold_unit.get_formspec(pos)
     if not meta or meta:get_int(gold_unit.IS_PRESENT_FLAG_NAME) ~= 1 then return "" end
 
     local formspec = "" ..
-        "image[4.6,3.1;1,1;technic_control_logic_unit_gold.png]" ..
-        "label[3.7,3.1;" .. S("GCLU\nSettings") .. "]" ..
-        ("field[5.8,3.45;1.1,1;%s;;${%s}]"):format(gold_unit.PERCENT_NAME, gold_unit.PERCENT_NAME) ..
-        ("field[6.8,3.45;1.1,1;%s;;${%s}]"):format(gold_unit.WAIT_NAME, gold_unit.WAIT_NAME) ..
-        "tooltip[5.5,2.95;1,1;" .. S("For the Gold Control Logic Unit ONLY") .. ":" ..
+        "image[4.6,0.1;1,1;technic_control_logic_unit_gold.png]" ..
+        "label[3.7,0.1;" .. S("GCLU\nSettings") .. "]" ..
+        ("field[5.8,0.45;1.1,1;%s;;${%s}]"):format(gold_unit.PERCENT_NAME, gold_unit.PERCENT_NAME) ..
+        ("field[6.8,0.45;1.1,1;%s;;${%s}]"):format(gold_unit.WAIT_NAME, gold_unit.WAIT_NAME) ..
+        "tooltip[5.5,0;1,1;" .. S("For the Gold Control Logic Unit ONLY") .. ":" ..
         "\n" ..
         "\n\t" .. S("The percent of the max stack size to reach before sending the stack") .. "" ..
         "\n\t" .. S("between") .. " (0,100%)]" ..
-        "tooltip[6.5,2.95;1,1;" .. S("For the Gold Control Logic Unit ONLY") .. ":" ..
+        "tooltip[6.5,0;1,1;" .. S("For the Gold Control Logic Unit ONLY") .. ":" ..
         "\n" ..
         "\n\t" .. S("The max time (second) to wait before sending the stack") .. "" ..
         "\n\t" .. S("between") .. " (2,3600s)," ..
@@ -30,8 +30,8 @@ function gold_unit.get_formspec(pos)
         "\n" ..
         "\n\t" .. S("EXAMPLE") .. ":" ..
         "\n\t\t " .. S("if a stack never reachs the percent after x seconds, the stack is sent") .. ". ]" ..
-        "label[5.55,2.9;" .. S("Percent") .. "]" ..
-        "label[6.55,2.9;" .. S("Time (s)") .. "]"
+        "label[5.55,-0.1;" .. S("Percent") .. "]" ..
+        "label[6.55,-0.1;" .. S("Time (s)") .. "]"
     return formspec
 end
 
