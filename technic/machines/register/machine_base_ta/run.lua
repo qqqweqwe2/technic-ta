@@ -3,6 +3,14 @@ local function round(v)
     return math.floor(v + 0.5)
 end
 
+local STATE_META_NAME = "machine_state"
+local STATE = {
+    UNPOWERED = "Unpowered",
+    IDLE = "Idle",
+    ACTIVE = "Active",
+    STUCK = "Stuck",
+}
+
 local RND_SEED_NAME = "rnd_seed"
 
 local function start_random_seed(meta)
@@ -22,6 +30,14 @@ local function stop_random_seed(meta, rnd_seed)
     end
 end
 
+local function set_state(meta, state)
+    meta:set_string(STATE_META_NAME, state)
+end
+
+local function is_stack_empty(inv_list)
+    return next(inv_list) == nil
+end
+
 return function(registration_context)
     return function(pos, node)
         local meta = minetest.get_meta(pos)
@@ -33,6 +49,7 @@ return function(registration_context)
         if not eu_input then
             meta:set_int(registration_context.def.tier .. "_EU_demand", machine_demand[1])
             meta:set_int(registration_context.def.tier .. "_EU_input", 0)
+            set_state(meta, STATE.UNPOWERED)
             return
         end
 
@@ -57,6 +74,7 @@ return function(registration_context)
                 meta:set_string("infotext", registration_context.infotext_idle)
                 meta:set_int(registration_context.def.tier .. "_EU_demand", 0)
                 meta:set_int("src_time", 0)
+                set_state(meta, is_stack_empty(inv:get_list("src")) and STATE.IDLE or STATE.STUCK)
                 return
             end
             meta:set_int(registration_context.def.tier .. "_EU_demand", machine_demand[EU_upgrade + 1])
@@ -67,6 +85,7 @@ return function(registration_context)
                 if not powered then
                     technic.swap_node(pos, registration_context.nodename)
                     meta:set_string("infotext", registration_context.infotext_unpowered)
+                    set_state(meta, STATE.UNPOWERED)
                 end
                 stop_random_seed(meta, rnd_seed)
                 return
@@ -77,9 +96,11 @@ return function(registration_context)
                 meta:set_int(registration_context.def.tier .. "_EU_demand", 0)
                 meta:set_int("src_time", round(recipe.time * 10))
                 stop_random_seed(meta, rnd_seed)
+                set_state(meta, is_stack_empty(inv:get_list("src")) and STATE.IDLE or STATE.STUCK)
                 return
             end
             meta:set_int("src_time", meta:get_int("src_time") - round(recipe.time * 10))
+            set_state(meta, STATE.ACTIVE)
         end
     end
 end
