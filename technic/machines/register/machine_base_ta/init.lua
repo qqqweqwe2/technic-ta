@@ -41,20 +41,22 @@ local function make_registration_context(nodename, data)
         groups.tubedevice = 1
         groups.tubedevice_receiver = 1
     end
+    local active_groups = table.copy(groups)
+    active_groups.not_in_creative_inventory = 1
+
     local output_size = def.output_size and tonumber(def.output_size) or 6
     if output_size > 9 then
         output_size = 9
     end
-    -- registration_context.output_size
 
     return {
         texture_prefix = texture_prefix,
-        colon = ":",
+        colon = colon,
         def = def,
         modname = modname,
         nodename = nodename,
         groups = groups,
-        active_groups = table.copy(groups),
+        active_groups = active_groups,
         input_size = technic.recipes[def.typename].input_size,
         output_size = output_size,
         ltier = ltier,
