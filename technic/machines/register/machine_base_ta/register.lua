@@ -1,36 +1,24 @@
 local path = technic.modpath .. "/machines/register/machine_base_ta"
 local run_func = assert(loadfile(path .. "/run.lua"))()
-local formspec_func = assert(loadfile(path .. "/formspec.lua"))()
-
+local get_formspec_func = assert(loadfile(path .. "/formspec.lua"))()
+local gold_unit = assert(loadfile(path .. "/gold_unit.lua"))()
 local fs_helpers = pipeworks.fs_helpers
 local tube_entry = "^pipeworks_tube_connection_metallic.png"
 
 local connect_default = { "bottom", "back", "left", "right" }
 
 local function update_formspec(registration_context, pos)
-    local node = minetest.get_node(pos)
     local meta = minetest.get_meta(pos)
-
-    local form_buttons = ""
-    if not string.find(node.name, ":lv_") then
-        form_buttons = fs_helpers.cycling_button(
-            meta,
-            pipeworks.button_base,
-            "splitstacks",
-            {
-                pipeworks.button_off,
-                pipeworks.button_on
-            }
-        ) .. pipeworks.button_label
-    end
-    meta:set_string("formspec", registration_context.formspec .. form_buttons)
+    if not meta then return end
+    meta:set_string("formspec", get_formspec_func(registration_context, pos))
 end
 
 local on_receive_fields = function(registration_context, pos, formname, fields, sender)
-    if fields.quit then return end
-    if not pipeworks.may_configure(pos, sender) then return end
-    fs_helpers.on_receive_fields(pos, fields)
+    if pipeworks.may_configure(pos, sender) then
+        fs_helpers.on_receive_fields(pos, fields)
+    end
 
+    gold_unit.on_receive_fields(registration_context, pos, formname, fields, sender)
     update_formspec(registration_context, pos)
 end
 
@@ -74,9 +62,21 @@ local function register(registration_context, data)
         tube = registration_context.def.tube and registration_context.tube or nil,
         on_construct = data.on_construct,
         can_dig = technic.machine_can_dig,
-        allow_metadata_inventory_put = technic.machine_inventory_put,
-        allow_metadata_inventory_take = technic.machine_inventory_take,
-        allow_metadata_inventory_move = technic.machine_inventory_move,
+        allow_metadata_inventory_put = function(pos, listname, index, stack, player)
+            local ret_value = technic.machine_inventory_put(pos, listname, index, stack, player)
+            update_formspec(registration_context, pos)
+            return ret_value
+        end,
+        allow_metadata_inventory_take = function(pos, listname, index, stack, player)
+            local ret_value = technic.machine_inventory_take(pos, listname, index, stack, player)
+            update_formspec(registration_context, pos)
+            return ret_value
+        end,
+        allow_metadata_inventory_move = function(pos, from_list, from_index, to_list, to_index, count, player)
+            local ret_value = technic.machine_inventory_move(pos, from_list, from_index, to_list, to_index, count, player)
+            update_formspec(registration_context, pos)
+            return ret_value
+        end,
         technic_run = run_func(registration_context),
         after_place_node = data.after_place_node,
         after_dig_node = data.after_dig_node,
@@ -97,7 +97,6 @@ return function(registration_context)
         registration_context.tube.insert_object = registration_context.def.insert_object
     end
     registration_context.tentry = tube_entry
-    registration_context.formspec = formspec_func(registration_context)
 
     if registration_context.ltier == "lv" then
         registration_context.tentry = ""

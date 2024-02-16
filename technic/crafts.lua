@@ -2,6 +2,7 @@
 
 local mat = technic.materials
 local has_mcl = minetest.get_modpath("mcl_core")
+local gold_unit = assert(loadfile(technic.modpath .. "/machines/register/machine_base_ta/gold_unit.lua"))()
 
 -- Remove some recipes
 -- Bronze
@@ -151,14 +152,7 @@ minetest.register_craft({
 	}
 })
 
-minetest.register_craft({
-	output = 'technic:control_logic_unit_gold',
-	recipe = {
-		{'technic:fine_gold_wire', 'technic:fine_gold_wire', 'technic:fine_gold_wire'},
-		{'technic:silicon_wafer', 'technic:silicon_wafer', 'technic:silicon_wafer'},
-		{'default:gold_ingot', 'technic:chromium_ingot', 'default:gold_ingot'},
-	}
-})
+gold_unit.register_craft()
 
 minetest.register_craft({
 	output = 'technic:mixed_metal_ingot 9',

@@ -2,6 +2,7 @@
 local S = technic.getter
 
 local has_mcl = minetest.get_modpath("mcl_core")
+local gold_unit = assert(loadfile(technic.modpath .. "/machines/register/machine_base_ta/gold_unit.lua"))()
 
 minetest.register_craftitem("technic:silicon_wafer", {
 	description = S("Silicon Wafer"),
@@ -83,10 +84,7 @@ minetest.register_craftitem("technic:control_logic_unit_adv", {
 	inventory_image = "technic_control_logic_unit_adv.png",
 })
 
-minetest.register_craftitem("technic:control_logic_unit_gold", {
-	description = S("Gold Control Logic Unit"),
-	inventory_image = "technic_control_logic_unit_gold.png",
-})
+gold_unit.register_craftitem()
 
 minetest.register_craftitem("technic:mixed_metal_ingot", {
 	description = S("Mixed Metal Ingot"),

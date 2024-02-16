@@ -1,6 +1,6 @@
-
 local S = technic.getter
 local mat = technic.materials
+local gold_unit = assert(loadfile(technic.modpath .. "/machines/register/machine_base_ta/gold_unit.lua"))()
 
 -- handles the machine upgrades every tick
 function technic.handle_machine_upgrades(meta)
@@ -22,8 +22,8 @@ function technic.handle_machine_upgrades(meta)
 		tube_upgrade = tube_upgrade + 1
 	elseif upg_item1 == "technic:control_logic_unit_adv" then
 		tube_upgrade = tube_upgrade + 6
-	elseif upg_item1 == "technic:control_logic_unit_gold" then
-		tube_upgrade = tube_upgrade + 106
+	elseif upg_item1 == gold_unit.item_name then
+		tube_upgrade = tube_upgrade + gold_unit.upgrade_increment_number
 	elseif upg_item1 == "technic:battery" then
 		EU_upgrade = EU_upgrade + 1
 	end
@@ -32,8 +32,8 @@ function technic.handle_machine_upgrades(meta)
 		tube_upgrade = tube_upgrade + 1
 	elseif upg_item2 == "technic:control_logic_unit_adv" then
 		tube_upgrade = tube_upgrade + 6
-	elseif upg_item2 == "technic:control_logic_unit_gold" then
-		tube_upgrade = tube_upgrade + 106
+	elseif upg_item2 == gold_unit.item_name then
+		tube_upgrade = tube_upgrade + tube_upgrade + gold_unit.upgrade_increment_number
 	elseif  upg_item2 == "technic:battery" then
 		EU_upgrade = EU_upgrade + 1
 	end
@@ -47,15 +47,8 @@ local function on_machine_upgrade(meta, stack)
 	if stack_name == "default:chest" then
 		meta:set_int("public", 1)
 		return 1
-	elseif stack_name == "technic:control_logic_unit_gold" then
-		-- default value
-		meta:set_int("IS_GCLU",1)
-        if meta:get_int("GCLU_Percent") == nil then
-		    meta:set_int("GCLU_Percent",90)
-        end
-        if meta:get_int("GCLU_Wait") == nil then
-		    meta:set_int("GCLU_Wait",30)
-		end
+    elseif stack_name == gold_unit.item_name then
+		gold_unit.init_meta(meta)
 		return 1
 	elseif stack_name ~= "technic:control_logic_unit"
 	and stack_name ~= "technic:control_logic_unit_adv"
@@ -67,7 +60,7 @@ end
 
 -- something is about to be removed
 local function on_machine_downgrade(meta, stack, list)
-	if stack:get_name() == "default:chest" or stack:get_name() == "technic:control_logic_unit_gold" then
+	if stack:get_name() == "default:chest" or stack:get_name() == gold_unit.item_name then
 		local inv = meta:get_inventory()
 		local upg1, upg2 = inv:get_stack("upgrade1", 1), inv:get_stack("upgrade2", 1)
 
@@ -75,10 +68,8 @@ local function on_machine_downgrade(meta, stack, list)
 		if (not upg1 or not upg2 or upg1:get_name() ~= upg2:get_name()) then
 			if stack:get_name() == "default:chest" then
 				meta:set_int("public", 0)
-			elseif stack:get_name() == "technic:control_logic_unit_gold" then
-				meta:set_string("IS_GCLU",nil)
-				meta:set_string("GCLU_Percent",nil) 
-				meta:set_string("GCLU_Wait", nil)
+            elseif stack:get_name() == gold_unit.item_name then
+				gold_unit.cleanup_meta(meta)
 			end
 		end
 	end
@@ -116,7 +107,7 @@ function technic.send_items(pos, x_velocity, z_velocity, output_name, full,is_pe
 				if full then
 					local is_to_send = true
 					if is_percent then 
-						wait = wait or meta:get_int("GCLU_Wait")
+						wait = wait or meta:get_int(gold_unit.WAIT_NAME)
 						
 						local clock_last_send = meta:get_int("clock_last_send"..tostring(cursor))
 						game_time = game_time or minetest.get_gametime()
@@ -223,9 +214,8 @@ function technic.handle_machine_pipeworks(pos, tube_upgrade, send_function)
 	local is_percent = 0
 	
 	if tube_upgrade > 100 then -- gold control unit to send less stack but bigger
-		is_percent = meta:get_int("GCLU_Percent")
+		is_percent = meta:get_int(gold_unit.PERCENT_NAME)
 		tube_upgrade = tube_upgrade % 100
-
 	end
 
 	if tube_upgrade > 2 then

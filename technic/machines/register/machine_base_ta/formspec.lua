@@ -1,6 +1,29 @@
 local S = technic.getter
+local path = technic.modpath .. "/machines/register/machine_base_ta"
+local gold_unit = assert(loadfile(path .. "/gold_unit.lua"))()
 
-return function(registration_context)
+local fs_helpers = pipeworks.fs_helpers
+
+local function get_form_buttons_formspec(pos)
+    local node = minetest.get_node(pos)
+    local meta = minetest.get_meta(pos)
+
+    local form_buttons = ""
+    if not string.find(node.name, ":lv_") then
+        form_buttons = fs_helpers.cycling_button(
+            meta,
+            pipeworks.button_base,
+            "splitstacks",
+            {
+                pipeworks.button_off,
+                pipeworks.button_on
+            }
+        ) .. pipeworks.button_label
+    end
+    return form_buttons
+end
+
+return function(registration_context, pos)
     local formspec_size = minetest.get_modpath("mcl_formspec") and "size[9,10]" or "size[8,9]"
 
     local formspec =
@@ -52,5 +75,7 @@ return function(registration_context)
             "listring[context;upgrade2]" ..
             "listring[current_player;main]"
     end
+    formspec = formspec .. get_form_buttons_formspec(pos)
+    formspec = formspec .. gold_unit.get_formspec(pos)
     return formspec
 end
