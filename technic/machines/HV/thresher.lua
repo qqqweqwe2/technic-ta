@@ -1,3 +1,5 @@
+local S = technic.getter
+
 minetest.register_craft({
 	output = "technic:hv_thresher",
 	recipe = {
@@ -7,10 +9,12 @@ minetest.register_craft({
 	}
 })
 
-technic.register_thresher({
+technic.register_base_machine("technic:hv_thresher", {
+	typename = "threshing",
+	description = S("@1 Thresher", S("HV")),
 	tier = "HV",
-	demand = {700, 500, 350},
+	demand = { 700, 500, 350 },
 	speed = 4,
 	upgrade = 1,
-	tube = 1,
+	tube = 1
 })

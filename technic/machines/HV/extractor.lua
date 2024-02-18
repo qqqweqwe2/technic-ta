@@ -1,3 +1,5 @@
+local S = technic.getter
+
 -- HV extractor
 
 minetest.register_craft({
@@ -9,4 +11,12 @@ minetest.register_craft({
 	}
 })
 
-technic.register_extractor({tier = "HV", demand = {400, 300, 200}, speed = 4, upgrade = 1, tube = 1})
+technic.register_base_machine("technic:hv_extractor", {
+    typename = "extracting",
+	description = S("@1 Extractor", S("HV")),
+	tier = "HV",
+	demand = { 400, 300, 200 },
+	speed = 4,
+	upgrade = 1,
+	tube = 1
+})

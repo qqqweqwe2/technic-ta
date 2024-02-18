@@ -1,3 +1,4 @@
+local S = technic.getter
 
 minetest.register_craft({
 	output = 'technic:hv_sawmill',
@@ -8,27 +9,29 @@ minetest.register_craft({
 	},
 })
 
-technic.register_sawmill({
+technic.register_base_machine("technic:hv_sawmill", {
+	typename = "sawmilling",
+	description = S("@1 Sawmill", S("HV")),
 	tier = "HV",
-	demand = {1500, 1125, 750},
+	demand = { 1500, 1125, 750 },
 	speed = 5,
 	node_box = {
 		type = "fixed",
 		fixed = {
-			{-3/32, 14/32, -1/32, 3/32, 15/32, 1/32},
-			{-6/32, 13/32, -1/32, 6/32, 14/32, 1/32},
-			{-8/32, 12/32, -1/32, 8/32, 13/32, 1/32},
-			{-9/32, 11/32, -1/32, 9/32, 12/32, 1/32},
-			{-10/32, 10/32, -1/32, 10/32, 11/32, 1/32},
-			{-11/32, 9/32, -1/32, 11/32, 10/32, 1/32},
-			{-12/32, 7/32, -1/32, 12/32, 9/32, 1/32},
-			{-1/2, -1/2, -1/2, 1/2, 7/32, 1/2},
+			{ -3 / 32,  14 / 32, -1 / 32, 3 / 32,  15 / 32, 1 / 32 },
+			{ -6 / 32,  13 / 32, -1 / 32, 6 / 32,  14 / 32, 1 / 32 },
+			{ -8 / 32,  12 / 32, -1 / 32, 8 / 32,  13 / 32, 1 / 32 },
+			{ -9 / 32,  11 / 32, -1 / 32, 9 / 32,  12 / 32, 1 / 32 },
+			{ -10 / 32, 10 / 32, -1 / 32, 10 / 32, 11 / 32, 1 / 32 },
+			{ -11 / 32, 9 / 32,  -1 / 32, 11 / 32, 10 / 32, 1 / 32 },
+			{ -12 / 32, 7 / 32,  -1 / 32, 12 / 32, 9 / 32,  1 / 32 },
+			{ -1 / 2,   -1 / 2,  -1 / 2,  1 / 2,   7 / 32,  1 / 2 },
 		},
 	},
-	tiles = {nil,nil,nil,nil,"_back",nil},
+	tiles = { nil, nil, nil, nil, "_back", nil },
 	upgrade = 1,
 	tube = 1,
-	tube_sides = {nil, true, true, true, true}
+	tube_sides = { nil, true, true, true, true },
 })
 
 minetest.after(0.1, function()

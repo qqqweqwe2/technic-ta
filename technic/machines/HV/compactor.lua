@@ -1,3 +1,4 @@
+local S = technic.getter
 -- HV compactor
 
 minetest.register_craft({
@@ -9,4 +10,12 @@ minetest.register_craft({
 	}
 })
 
-technic.register_compactor({tier = "HV", demand = {1500, 1000, 750}, speed = 5, upgrade = 1, tube = 1})
+technic.register_base_machine("technic:hv_compactor", {
+	typename = "compacting",
+	description = S("@1 Compactor", S("HV")),
+	tier = "HV",
+	demand = { 1500, 1000, 750 },
+	speed = 5,
+	upgrade = 1,
+	tube = 1
+})

@@ -26,12 +26,7 @@ dofile(path.."/freezer_recipes.lua")
 -- Multi-Machine Recipes
 dofile(path.."/grindings.lua")
 
-dofile(path.."/centrifuge.lua")
-dofile(path.."/extractor.lua")
-dofile(path.."/compactor.lua")
 dofile(path.."/compactor_recipes.lua")
 dofile(path.."/rnd.lua")
-dofile(path.."/sawmill.lua")
 dofile(path.."/sawmill_recipes.lua")
 dofile(path.."/thresher_recipes.lua")
-dofile(path.."/thresher.lua")

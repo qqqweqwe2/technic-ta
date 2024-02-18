@@ -1,3 +1,4 @@
+local S = technic.getter
 minetest.register_craft({
 	output = "technic:hv_centrifuge",
 	recipe = {
@@ -7,10 +8,12 @@ minetest.register_craft({
 	}
 })
 
-technic.register_centrifuge({
+technic.register_base_machine("technic:hv_centrifuge", {
+	typename = "separating",
+	description = S("@1 Centrifuge", S("HV")),
 	tier = "HV",
 	demand = { 6000, 5500, 5000 },
 	speed = 4,
 	upgrade = 1,
-	tube = 1,
+	tube = 1
 })
