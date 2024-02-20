@@ -74,7 +74,7 @@ local function register_recipe(typename, data)
 		return
 	end
 	for _, stack in ipairs(data.input) do
-		recipe.input[ItemStack(stack):get_name()] = ItemStack(stack):get_count()
+		recipe.input[#recipe.input+1] = {name = ItemStack(stack):get_name(), count = ItemStack(stack):get_count()}
 	end
 
 	technic.recipes[typename].recipes[index] = recipe
@@ -195,7 +195,8 @@ function technic.get_recipe(typename, items)
 					else
 						r = result
 					end
-					r[v] = candidates[num][1]
+                    if not r[v] then r[v] = {} end
+					r[v][#r[v] + 1] = candidates[num][1	]
 					return r;
 				end
 			end
@@ -218,6 +219,17 @@ function technic.get_recipe(typename, items)
 	end
 	local recipe = technic.recipes[typename].recipes[index]
 
+	local function replace_group_by_item(result, input_item)
+        local group = result[input_item.name]
+        if #group < 1 then return nil end
+        local ret_value = {
+			name = group[#group],
+			count = input_item.count
+		}
+        group[#group] = nil
+		return ret_value
+	end
+
 	if not recipe then -- if the direct recipe doesn't exist, we need to take the groups into account and retry
 		local candidates = build_candidates(items)
 
@@ -232,10 +244,8 @@ function technic.get_recipe(typename, items)
 
 			-- erase original inputs and write new ones with groups replaced by actual items
 			recipe.input = {}
-			for k, v in pairs(result) do
-				if (k ~= "_recipe") then
-					recipe.input[v] = result._recipe.input[k]
-				end
+			for _, input_item in ipairs(result._recipe.input) do
+				recipe.input[#recipe.input + 1] = replace_group_by_item(result, input_item)
 			end
 		end
 	end
@@ -243,6 +253,15 @@ function technic.get_recipe(typename, items)
 	if recipe then
 		local new_input = {}
 		local extra_output = {}
+        local function get_input_cost(input_items, input_item_name)
+			for _, input_item in ipairs(input_items) do
+				if input_item.name == input_item_name then
+					return input_item.count
+				end
+			end
+			return 0
+		end
+
 		for i, stack in ipairs(items) do
             --minetest.log(stack:get_name())
             inputamount = stack:get_count() or 1
@@ -267,7 +286,7 @@ function technic.get_recipe(typename, items)
 					end
 				end
 			else
-				local input = recipe.input[stack:get_name()] or 0
+				local input = get_input_cost(recipe.input, stack:get_name())
 				if stack:get_count() ~= nil and stack:get_count() < input then
 					return nil
 				else
