@@ -134,6 +134,9 @@ function technic.send_items(pos, x_velocity, z_velocity, output_name, full,is_pe
 							meta:set_string("clock_last_send"..tostring(cursor), nil)
 						end
 						inv:set_stack(output_name, cursor, stack)
+						if output_name == "dst" then
+							meta:set_int("output_taken", 1)
+						end
 						meta:set_int("output_round_robin", cursor)
 						return true					
 					end
@@ -142,6 +145,9 @@ function technic.send_items(pos, x_velocity, z_velocity, output_name, full,is_pe
 					technic.tube_inject_item(pos, pos, vector.new(x_velocity, 0, z_velocity), item0)
 					stack:take_item(1)
 					inv:set_stack(output_name, cursor, stack)
+					if output_name == "dst" then
+						meta:set_int("output_taken", 1)
+					end
 					meta:set_int("output_round_robin", cursor)
 					return true
 				end

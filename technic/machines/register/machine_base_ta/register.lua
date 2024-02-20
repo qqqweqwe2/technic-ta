@@ -74,6 +74,11 @@ local function register(registration_context, data)
         end,
         allow_metadata_inventory_take = function(pos, listname, index, stack, player)
             local ret_value = technic.machine_inventory_take(pos, listname, index, stack, player)
+            if ret_value then
+                if listname == "dst" then
+                    minetest.get_meta(pos):set_int("output_taken", 1)
+                end
+            end
             update_formspec(registration_context, pos)
             return ret_value
         end,

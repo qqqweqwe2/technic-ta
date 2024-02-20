@@ -274,7 +274,7 @@ function technic.can_insert_unique_stack(pos, node, incoming_stack, direction)
 end
 
 function technic.process_recipe(recipe, inv)
-	local dst_copy = inv:get_list("dst")
+	local dst_copy = table.copy(inv:get_list("dst"))
     if type(recipe.output) == "string" then recipe.output = {recipe.output} end
 	for _,item in ipairs(recipe.output) do
         local name = ItemStack(item):get_name()

@@ -34,6 +34,13 @@ return function(registration_context)
         local meta = minetest.get_meta(pos)
         if not meta then return end
 
+        if not meta:get_int("output_taken") then
+            meta:set_int("output_taken", 1)
+        end
+        if meta:get_int("output_taken") == 2 then
+            return
+        end
+
         machine_digilines.run(registration_context, pos, node)
         local inv = meta:get_inventory()
         local eu_input = meta:get_int(registration_context.def.tier .. "_EU_input")
@@ -97,6 +104,7 @@ return function(registration_context)
                 machine_state.set(meta, is_stack_empty(inv:get_list("src"))
                     and machine_state.STATE.IDLE
                     or machine_state.STATE.STALLED)
+                meta:set_int("output_taken", 2)
                 return
             end
             meta:set_int("src_time", meta:get_int("src_time") - round(recipe.time * 10))
