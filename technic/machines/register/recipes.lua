@@ -230,12 +230,35 @@ function technic.get_recipe(typename, items)
 		return ret_value
 	end
 
+    local function input_conform_to_receipt(input_candidates, ordered_items)
+        for i, input_item in ipairs(ordered_items) do
+            local input = input_candidates[i]
+            if not input then
+                return false
+            end
+            local found = false
+            for  key, candidate in pairs(input) do
+				if candidate == input_item.name then
+                    found = true
+					break
+                end
+            end
+            if not found then
+				return false
+            end
+        end
+		return true
+	end
+
 	if not recipe then -- if the direct recipe doesn't exist, we need to take the groups into account and retry
 		local candidates = build_candidates(items)
 
 		local result = recurse_candidates(candidates, 1, {})
 
 		if result then
+			if not input_conform_to_receipt(candidates, result._recipe.input) then
+				return nil
+			end
 			-- copy recipe
 			recipe = {}
 			for k, v in pairs(result._recipe) do
