@@ -38,7 +38,7 @@ local run = function(pos, node)
 	local meta         = minetest.get_meta(pos)
 	local inv          = meta:get_inventory()
 	local eu_input     = meta:get_int("HV_EU_input")
-	local machine_name = S("%s Tool Workshop"):format("HV")
+	local machine_name = "HV Tool Workshop"
 	local machine_node = "technic:tool_workshop"
 
 	-- Setup meta data if it does not exist.
@@ -83,7 +83,7 @@ local run = function(pos, node)
 end
 
 minetest.register_node("technic:tool_workshop", {
-	description = S("%s Tool Workshop"):format("HV"),
+	description = "HV Tool Workshop",
 	paramtype2 = "facedir",
 	tiles = {
 		"technic_workshop_top.png"..tube_entry,
@@ -99,7 +99,7 @@ minetest.register_node("technic:tool_workshop", {
 	sounds = default.node_sound_wood_defaults(),
 	on_construct = function(pos)
 		local meta = minetest.get_meta(pos)
-		meta:set_string("infotext", S("%s Tool Workshop"):format("HV"))
+		meta:set_string("infotext", "HV Tool Workshop")
 		meta:set_string("formspec", workshop_formspec)
 		local inv = meta:get_inventory()
 		inv:set_size("src", 1)
