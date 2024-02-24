@@ -593,8 +593,6 @@ local function run_nodes(list, vm, run_stage, network)
 	for _, pos in ipairs(list) do
 		local node = minetest.get_node_or_nil(pos)
 		if not node then
-			minetest.log("warning", "[technic] run_nodes: node not found at " .. minetest.pos_to_string(pos)..
-			", trying to refresh the pos via VoxelManip")
 			vm:read_from_map(pos, pos)
 			node = minetest.get_node_or_nil(pos)
 		end
