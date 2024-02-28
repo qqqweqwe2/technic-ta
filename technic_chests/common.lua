@@ -76,7 +76,9 @@ end
 
 function technic.chests.inv_put(pos, listname, index, stack, player)
 	if not (default.can_interact_with_node(player, pos) or technic.can_interact(pos, player:get_player_name())) then
-		return 0 
+		return 0
+	elseif minetest.get_item_group(stack:get_name(), "bag") > 0 then
+		return 0
 	else
 		if listname == "quickmove" then
 			local meta = minetest.get_meta(pos)
