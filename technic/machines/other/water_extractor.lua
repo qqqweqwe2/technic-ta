@@ -58,7 +58,7 @@ local run_water_extractor = function(pos, elapsed)
 	end
 	
 	local result = technic.get_recipe("extracting", inv:get_list("src"))
-	if result and not string.find(result.output, 'dye') then
+	if result and not string.find(result.output[1], 'dye') then
 		result = nil
 	end
 	
