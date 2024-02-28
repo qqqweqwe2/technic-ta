@@ -1,19 +1,17 @@
 technic.is_areas = minetest.global_exists("areas")
 
-function technic.can_interact(pos, name)
-	if technic.is_areas then
-		if minetest.get_meta(pos):get_string("shared") == "true" then
-			local owners = areas:getNodeOwners(pos)
-			for _, owner in pairs(owners) do
-				if owner == name then
-					return true
-				end
-			end
-			return false
-		end
-	else
-		return default.can_interact_with_node(minetest.get_player_by_name(name), pos)
-	end
+function technic.can_interact(player, pos, is_shared)
+    if default.can_interact_with_node(player, pos) then return true end
+    if not areas or not is_shared then return false end
+
+    local player_name = player:get_player_name()
+    local owners = areas:getNodeOwners(pos)
+    for _, owner in pairs(owners) do
+        if owner == player_name then
+            return true
+        end
+    end
+    return false
 end
 
 technic.chests.groups = {snappy=2, choppy=2, oddly_breakable_by_hand=2,
@@ -55,23 +53,27 @@ local function inv_change(pos, count, player)
 end
 
 function technic.chests.inv_move(pos, from_list, from_index, to_list, to_index, count, player)
-	local meta = minetest.get_meta(pos)
-	local inv = meta:get_inventory()
-	local stack = inv:get_stack(from_list, from_index)
-	if from_list == "quickmove" then
-		local stack_copy = inv:get_stack(to_list, to_index)
-		inv:set_stack(to_list, to_index, stack_copy)
-		inv:set_stack(from_list, from_index, ItemStack(""))
-		meta:set_string("item", "")
-		return 0
-	elseif from_list == "main" and to_list == "quickmove" then
-		local stack_copy = ItemStack(stack)
-		stack_copy:set_count(1)
-		inv:set_stack(to_list, to_index, stack_copy)
-		meta:set_string("item", tostring(stack_copy:get_name()))
-		return 0
-	end
-	return inv_change(pos, count, player)
+    local meta = minetest.get_meta(pos)
+    local is_shared = meta:get_string("shared") == "true"
+
+    if not technic.can_interact(player, pos, is_shared) then return 0 end
+
+    local inv = meta:get_inventory()
+    local stack = inv:get_stack(from_list, from_index)
+    if from_list == "quickmove" then
+        local stack_copy = inv:get_stack(to_list, to_index)
+        inv:set_stack(to_list, to_index, stack_copy)
+        inv:set_stack(from_list, from_index, ItemStack(""))
+        meta:set_string("item", "")
+        return 0
+    elseif from_list == "main" and to_list == "quickmove" then
+        local stack_copy = ItemStack(stack)
+        stack_copy:set_count(1)
+        inv:set_stack(to_list, to_index, stack_copy)
+        meta:set_string("item", tostring(stack_copy:get_name()))
+        return 0
+    end
+    return count
 end
 
 function technic.chests.inv_put(pos, listname, index, stack, player)
@@ -94,18 +96,17 @@ function technic.chests.inv_put(pos, listname, index, stack, player)
 end
 
 function technic.chests.inv_take(pos, listname, index, stack, player)
-	if not (default.can_interact_with_node(player, pos) or technic.can_interact(pos, player:get_player_name())) then
-		return 0 
-	else
-		if listname == "quickmove" then
-			local meta = minetest.get_meta(pos)
-			local inv = meta:get_inventory()
-			inv:set_stack(listname, index, ItemStack(""))
-			meta:set_string("item", "")
-			return 0
-		end
-	end
-	return inv_change(pos, stack:get_count(), player)
+    local meta = minetest.get_meta(pos)
+    local is_shared = meta:get_string("shared") == "true"
+
+    if not technic.can_interact(player, pos, is_shared) then return 0 end
+    if listname ~= "quickmove" then return stack:get_count() end
+
+    local meta = minetest.get_meta(pos)
+    local inv = meta:get_inventory()
+    inv:set_stack(listname, index, ItemStack(""))
+    meta:set_string("item", "")
+    return 0
 end
 
 function technic.chests.on_inv_move(pos, from_list, from_index, to_list, to_index, count, player)

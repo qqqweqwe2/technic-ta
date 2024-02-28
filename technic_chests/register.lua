@@ -222,7 +222,8 @@ local function get_receive_fields(name, data)
 		local page = "main"
 		local player_inv = sender:get_inventory()
 		local inv = meta:get_inventory()
-		local technic_interact = technic.can_interact(pos, sender:get_player_name())
+		local is_shared = meta:get_string("shared") == "true"
+		local technic_interact = technic.can_interact(sender, pos, is_shared)
 		local default_interact = default.can_interact_with_node(sender, pos)
 
 		if (fields.sort and (technic_interact or default_interact))
@@ -427,7 +428,8 @@ function technic.chests:definition(name, data)
 		def.can_dig = function(pos,player)
 			local meta = minetest.get_meta(pos);
 			local inv = meta:get_inventory()
-			return inv:is_empty("main") and (default.can_interact_with_node(player, pos) or technic.can_interact(pos, player:get_player_name()))
+			local is_shared = meta:get_string("shared") == "true"
+			return inv:is_empty("main") and technic.can_interact(player, pos, is_shared)
 		end
 		def.on_skeleton_key_use = function(pos, player, newsecret)
 			local meta = minetest.get_meta(pos)
