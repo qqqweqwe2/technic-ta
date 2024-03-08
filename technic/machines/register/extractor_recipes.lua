@@ -35,8 +35,8 @@ if minetest.get_modpath("dye") then
 		table.insert(dye_recipes, {"bushes:blueberry", unifieddyes and "unifieddyes:magenta_s50 4" or "dye:magenta 4"})
 	end
 
-	if (minetest.get_modpath("hunger") or minetest.get_modpath("hbhunger"))  and minetest.get_modpath("ethereal") then
-		table.insert(dye_recipes, {"ethereal:willow_twig 12", "technic:aspirin_pill"})
+	if minetest.get_modpath("ethereal") and minetest.get_modpath("elements") then
+		table.insert(dye_recipes, {"ethereal:willow_twig 12", "elements:aspirin"})
 	end
 	
 	if minetest.get_modpath("farming") then
