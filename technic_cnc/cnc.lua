@@ -241,7 +241,6 @@ local run = function(pos, node)
 		meta:set_int("LV_EU_demand", 0)
 		return
 	end
-
 	if eu_input < demand then
 		technic.swap_node(pos, machine_node)
 		meta:set_string("infotext", S("%s Unpowered"):format(machine_name))
