@@ -82,7 +82,7 @@ local run_solar_furnace = function(pos, elapsed)
 									"listring[current_name;src]"..
 									"listring[current_player;main]")
 				
-				local result_stack = ItemStack(result.output)
+				local result_stack = ItemStack(result.output[1])
 				if inv:room_for_item("dst", result_stack) then
 					inv:set_list("src", result.new_input)
 					inv:add_item("dst", result_stack)
