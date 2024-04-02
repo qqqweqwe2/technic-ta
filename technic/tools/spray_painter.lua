@@ -209,7 +209,7 @@ local function spray_paint(itemstack, user, pointed_thing, ptype)
 		end
 
 		return itemstack
-	elseif target and target.name == "technic:trampoline" then
+	elseif target and target.name == "technic:trampoline" or target and (target.name == "xdecor:curtain_white" or target.name == "xdecor:curtain_open_white") then
 		local p2 = target.param2
 		local orientation = p2 % 8
 		local cindex = (p2 - orientation) / 8
