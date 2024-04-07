@@ -32,6 +32,9 @@ local function deploy_node(inv, slot_name, pos, node, machine_node)
 		   node.name == "technic:corium_flowing" or -- corium_flowing
 		   node.name == "elements:glue_source" or -- glue_source
 		   node.name == "elements:glue_flowing" or -- glue_flowing
+		   node.name == "ggraffiti:canvas" or
+		   node.name == "ggraffiti:canvas_node" or
+		   node.name == "ggraffiti:canvas_invisible" or
 		   node.name == "australia:muddy_river_water_source" or -- a liquid O_o
 		   node.name == "australia:muddy_river_water_flowing" or -- a liquid O_o
 		   node.name == "aotearoa:boiling_mud_source" or -- an other liquid O_o
