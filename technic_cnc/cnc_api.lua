@@ -371,6 +371,18 @@ function technic_cnc.register_all(recipeitem, groups, images, description)
 		if do_register then
 			technic_cnc.register_program(recipeitem, data.suffix, data.model,
 			    groups, images, description.." "..data.desc, data.cbox, data.sbox)
+            if minetest.registered_nodes[recipeitem] then
+                local old_groups = minetest.registered_nodes[recipeitem].groups or {}
+                local new_groups = {}
+                for k,v in pairs(old_groups) do
+                    new_groups[k] = v
+                end
+                new_groups["cnc"] = 1
+
+                minetest.override_item(recipeitem, {
+                    groups = new_groups,
+                })
+            end
 		end
 	end
 end
