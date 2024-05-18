@@ -381,7 +381,7 @@ local function start_reactor(pos, meta)
 
 	-- Check that the reactor is complete
 	if reactor_structure_badness(pos) ~= 0 then
-		return "Error: The power plant seems to be built incorrectly."
+		return {false, "Error: The power plant seems to be built incorrectly."}
 	end
 
 	meta:set_int("burn_time", 1)
