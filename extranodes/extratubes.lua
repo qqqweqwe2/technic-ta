@@ -57,6 +57,8 @@ if minetest.get_modpath("pipeworks") then
 	---------------------------------------------------------------------
 			
 	
+	if minetest.get_modpath("mesecons") then
+
 	if pipeworks.enable_one_way_tube and pipeworks.enable_conductor_tube then
 		minetest.register_node(":pipeworks:conductor_one_way_tube_on", {
 			description = S("One-way Conducting Tube"),
@@ -241,6 +243,7 @@ if minetest.get_modpath("pipeworks") then
 			{ "", "mesecons:wire_00000000_off", ""}
 		},
 	})
-	
+
+	end -- if modpath("mesecons")
 
 end
