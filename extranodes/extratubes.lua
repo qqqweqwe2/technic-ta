@@ -41,6 +41,7 @@ if minetest.get_modpath("pipeworks") then
 		},
 		after_place_node = pipeworks.after_place,
 		after_dig_node = pipeworks.after_dig,
+		on_rotate = pipeworks.on_rotate,
 	})
 
 	minetest.register_craft({
@@ -85,6 +86,7 @@ if minetest.get_modpath("pipeworks") then
 			},
 			after_place_node = pipeworks.after_place,
 			after_dig_node = pipeworks.after_dig,
+			on_rotate = pipeworks.on_rotate,
 			mesecons = {
 				conductor = {state = mesecon.state.on,
 						rules = pipeworks.mesecons_rules,
@@ -123,6 +125,7 @@ if minetest.get_modpath("pipeworks") then
 			},
 			after_place_node = pipeworks.after_place,
 			after_dig_node = pipeworks.after_dig,
+			on_rotate = pipeworks.on_rotate,
 			mesecons = {
 				conductor = {state = mesecon.state.off,
 						rules = pipeworks.mesecons_rules,
@@ -174,6 +177,7 @@ if minetest.get_modpath("pipeworks") then
 		},
 		after_place_node = pipeworks.after_place,
 		after_dig_node = pipeworks.after_dig,
+		on_rotate = pipeworks.on_rotate,
 		mesecons = {
 			effector = {
 				rules = pipeworks.mesecons_rules,
@@ -215,6 +219,7 @@ if minetest.get_modpath("pipeworks") then
 		},
 		after_place_node = pipeworks.after_place,
 		after_dig_node = pipeworks.after_dig,
+		on_rotate = pipeworks.on_rotate,
 		mesecons = {
 			effector = {
 				rules = pipeworks.mesecons_rules,
