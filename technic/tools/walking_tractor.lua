@@ -251,7 +251,7 @@ end
 -- Register the tool and its varieties in the game
 technic.register_power_tool("technic:walking_tractor", walking_tractor_max_charge)
 minetest.register_tool("technic:walking_tractor", {
-	description = S("Walking Tractor"),
+	description = ("Walking Tractor"),
 	groups = {technic_tool = 1, technic_powertool = 1},
 	inventory_image = "technic_walking_tractor.png",
 	stack_max = 1,
@@ -264,7 +264,7 @@ minetest.register_tool("technic:walking_tractor", {
 for i = 1, 6 do
 	technic.register_power_tool("technic:walking_tractor_" .. i, walking_tractor_max_charge)
 	minetest.register_tool("technic:walking_tractor_" .. i, {
-		description = S("Walking Tractor Mode %d"):format(i),
+		description = ("Walking Tractor Mode %d"):format(i),
 		groups = {technic_tool = 1, technic_powertool = 1},
 		inventory_image = "technic_walking_tractor.png^technic_tool_mode" .. i .. ".png",
 		wield_image = "technic_walking_tractor.png",

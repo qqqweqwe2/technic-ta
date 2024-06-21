@@ -228,7 +228,7 @@ end)
 -- Register the tool and its varieties in the game
 technic.register_power_tool("technic:planter", planter_max_charge)
 minetest.register_tool("technic:planter", {
-	description = S("Planter"),
+	description = ("Planter"),
 	groups = {technic_tool = 1, technic_powertool = 1},
 	inventory_image = "technic_planter.png",
 	stack_max = 1,
@@ -241,7 +241,7 @@ minetest.register_tool("technic:planter", {
 for i = 1, 6 do
 	technic.register_power_tool("technic:planter_" .. i, planter_max_charge)
 	minetest.register_tool("technic:planter_" .. i, {
-		description = S("Planter Mode %d"):format(i),
+		description = ("Planter Mode %d"):format(i),
 		groups = {technic_tool = 1, technic_powertool = 1},
 		inventory_image = "technic_planter.png^technic_tool_mode" .. i .. ".png",
 		wield_image = "technic_planter.png",

@@ -138,7 +138,7 @@ end
 -- Register the tool and its varieties in the game
 technic.register_power_tool("technic:lawn_trimmer", lawn_trimmer_max_charge)
 minetest.register_tool("technic:lawn_trimmer", {
-	description = S("Lawn Trimmer"),
+	description = ("Lawn Trimmer"),
 	groups = {technic_tool = 1, technic_powertool = 1},
 	inventory_image = "technic_lawn_trimmer.png",
 	stack_max = 1,
@@ -151,7 +151,7 @@ minetest.register_tool("technic:lawn_trimmer", {
 for i = 1, 4 do
 	technic.register_power_tool("technic:lawn_trimmer_" .. i, lawn_trimmer_max_charge)
 	minetest.register_tool("technic:lawn_trimmer_" .. i, {
-		description = S("Lawn Trimmer Mode %d"):format(i),
+		description = ("Lawn Trimmer Mode %d"):format(i),
 		groups = {technic_tool = 1, technic_powertool = 1},
 		inventory_image = "technic_lawn_trimmer.png^technic_tool_mode" .. i .. ".png",
 		wield_image = "technic_lawn_trimmer.png",
