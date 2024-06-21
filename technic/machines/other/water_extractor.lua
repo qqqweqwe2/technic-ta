@@ -58,7 +58,7 @@ local run_water_extractor = function(pos, elapsed)
 	end
 	
 	local result = technic.get_recipe("extracting", inv:get_list("src"))
-	if result and not string.find(result.output[1], 'dye') then
+	if result and not string.find(result.output, 'dye') then
 		result = nil
 	end
 	
@@ -91,7 +91,7 @@ local run_water_extractor = function(pos, elapsed)
 								"listring[current_name;water]"..
 								"listring[current_player;main]")
 				
-				local result_stack = ItemStack(result.output[1])
+				local result_stack = ItemStack(result.output)
 				if inv:room_for_item("dst", result_stack) then
 					inv:set_list("src", result.new_input)
 					inv:add_item("dst", result_stack)
