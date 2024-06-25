@@ -379,19 +379,13 @@ end
 local function add_network_machine(nodes, pos, network_id, all_nodes, multitier)
 	local node_id = poshash(pos)
 	local net_id_old = technic_cables[node_id]
-	if net_id_old == nil or (multitier and net_id_old ~= network_id and all_nodes[node_id] == nil) then
+	if net_id_old == nil or (multitier and net_id_old ~= network_id and all_nodes[node_id] == nil) or (not multitier and net_id_old ~= network_id) then
 		-- Add machine to network only if it is not already added
 		table.insert(nodes, pos)
 		-- FIXME: Machines connecting to multiple networks should have way to store multiple network ids
 		technic_cables[node_id] = network_id
 		all_nodes[node_id] = pos
 		return true
-	elseif not multitier and net_id_old ~= network_id then
-		-- Do not allow running from multiple networks, trigger overload
-		technic.overload_network(network_id)
-		technic.overload_network(net_id_old)
-		local meta = minetest.get_meta(pos)
-		meta:set_string("infotext",S("Network Overloaded"))
 	end
 end
 
