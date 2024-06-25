@@ -28,6 +28,9 @@ technic.chests.tube = {
 	can_insert = function(pos, node, stack, direction)
 		local meta = minetest.get_meta(pos)
 		local inv = meta:get_inventory()
+        if minetest.get_item_group(stack:get_name(), "bag") > 0 then
+            return 0
+        end
 		if meta:get_int("splitstacks") == 1 then
 			stack = stack:peek_item(1)
 		end
@@ -77,22 +80,21 @@ function technic.chests.inv_move(pos, from_list, from_index, to_list, to_index, 
 end
 
 function technic.chests.inv_put(pos, listname, index, stack, player)
-	if not (default.can_interact_with_node(player, pos) or technic.can_interact(pos, player:get_player_name())) then
-		return 0
-	elseif minetest.get_item_group(stack:get_name(), "bag") > 0 then
-		return 0
-	else
-		if listname == "quickmove" then
-			local meta = minetest.get_meta(pos)
-			local inv = meta:get_inventory()
-			local stack_copy = ItemStack(stack)
-			stack_copy:set_count(1)
-			inv:set_stack(listname, index, stack_copy)
-			meta:set_string("item", tostring(stack:get_name()))
-			return 0
-		end
-	end
-	return inv_change(pos, stack:get_count(), player)
+	local meta = minetest.get_meta(pos)
+	local is_shared = meta:get_string("shared") == "true"
+
+	if not technic.can_interact(player, pos, is_shared) then return 0 end
+    if minetest.get_item_group(stack:get_name(), "bag") > 0 then
+        return 0
+    end
+	if listname ~= "quickmove" then return stack:get_count() end
+
+	local inv = meta:get_inventory()
+	local stack_copy = ItemStack(stack)
+	stack_copy:set_count(1)
+	inv:set_stack(listname, index, stack_copy)
+	meta:set_string("item", tostring(stack:get_name()))
+	return 0
 end
 
 function technic.chests.inv_take(pos, listname, index, stack, player)
