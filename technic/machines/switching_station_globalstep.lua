@@ -15,13 +15,13 @@ minetest.register_globalstep(function(dtime)
 
 	local max_lag = technic.get_max_lag()
 	-- slow down technic execution if the lag is higher than usual
-	if max_lag > 5.0 then
+	if max_lag > 10.0 then
 		technic_run_interval = 5.0
-	elseif max_lag > 2.0 then
+	elseif max_lag > 6 then
 		technic_run_interval = 4.0
-	elseif max_lag > 1.5 then
+	elseif max_lag > 4 then
 		technic_run_interval = 3.0
-	elseif max_lag > 1.0 then
+	elseif max_lag > 2.0 then
 		technic_run_interval = 1.5
 	else
 		-- normal run_interval
