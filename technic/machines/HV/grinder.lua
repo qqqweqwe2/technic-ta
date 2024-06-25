@@ -17,5 +17,5 @@ technic.register_base_machine("technic:hv_grinder", {
 	demand={1200, 900, 600},
 	speed=5,
 	upgrade=1,
-	tube=1
+	tube=1,
 })
