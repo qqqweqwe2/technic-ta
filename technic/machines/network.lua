@@ -612,6 +612,7 @@ function technic.network_run(network_id)
 	local RE_nodes
 
 	local network = networks[network_id]
+    local node_count = 0
 	if network then
 		PR_nodes, BA_nodes, RE_nodes = get_network(network_id, network.tier)
 		if not PR_nodes or technic.is_overloaded(network_id) then return end
@@ -667,6 +668,15 @@ function technic.network_run(network_id)
 	technic.network_infotext(network_id, S("@1. Supply: @2 Demand: @3",
 			S("Switching Station"), technic.EU_string(PR_eu_supply),
 			technic.EU_string(RE_eu_demand)))
+
+    if network then
+	    for _ in pairs(network.all_nodes) do node_count = node_count + 1 end
+        if node_count > 4000 then
+            network.skip = 20
+            network.secret = 1
+            return
+        end
+    end
 
 	-- Data that will be used by the power monitor
 	network.supply = PR_eu_supply

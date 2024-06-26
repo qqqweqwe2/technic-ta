@@ -55,7 +55,7 @@ minetest.register_globalstep(function(dtime)
 					network.skip = 2
 				end
 
-				if network.skip > 0 then
+				if network.skip > 0 and not network.secret then
 					-- calculate efficiency in percent and display it
 					local efficiency = math.floor(1/network.skip*100)
 					technic.network_infotext(network_id,
@@ -65,6 +65,9 @@ minetest.register_globalstep(function(dtime)
 					-- remove laggy network from active index
 					-- it will be reactivated when a player is near it
 					technic.active_networks[network_id] = nil
+                elseif network.skip > 0 and network.secret == 1 then
+                    technic.network_infotext(network_id, S("@1 Network Overloaded, too large! (>4000 nodes)", S("Switching Station")))
+                    technic.active_networks[network_id] = nil
 				end
 			end
 
