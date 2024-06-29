@@ -429,7 +429,7 @@ local chainsaws_data = {
 		tree_max_radius = 10,
 		tree_max_height = 70,
 		leaves_reach = 2,
-		efficiency = 0.92,
+		efficiency = 1,
 		max_charge = 15000,
 		recipe = {
 			{ "technic:wrought_iron_ingot", "technic:wrought_iron_ingot", "technic:battery" },
@@ -445,7 +445,7 @@ local chainsaws_data = {
 		tree_max_radius = 10,
 		tree_max_height = 70,
 		leaves_reach = 2,
-		efficiency = 0.92,
+		efficiency = 1,
 		max_charge = 30000,
 		recipe = {
 			{ "technic:stainless_steel_ingot", trigger,                 "technic:battery" },
@@ -462,7 +462,7 @@ local chainsaws_data = {
 		tree_max_radius = 10,
 		tree_max_height = 70,
 		leaves_reach = 2,
-		efficiency = 0.92,
+		efficiency = 1,
 		max_charge = 120000,
 		recipe = {
 			{ "technic:chainsaw", "technic:stainless_steel_ingot", "technic:stainless_steel_ingot" },
