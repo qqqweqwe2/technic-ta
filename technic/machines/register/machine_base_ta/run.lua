@@ -46,20 +46,20 @@ return function(registration_context)
         local eu_input = meta:get_int(registration_context.def.tier .. "_EU_input")
         local machine_demand = registration_context.def.demand
 
-        local EU_upgrade, tube_upgrade = 0, 0
-        if registration_context.def.tube then
-            technic.handle_machine_pipeworks(pos, tube_upgrade)
-        end
-        if registration_context.def.upgrade then
-            EU_upgrade, tube_upgrade = technic.handle_machine_upgrades(meta)
-        end
-
         -- Setup meta registration_context.def if it does not exist.
         if not eu_input then
             meta:set_int(registration_context.def.tier .. "_EU_demand", machine_demand[1])
             meta:set_int(registration_context.def.tier .. "_EU_input", 0)
             machine_state.set(meta, machine_state.STATE.UNPOWERED)
             return
+        end
+
+        local EU_upgrade, tube_upgrade = 0, 0
+        if registration_context.def.upgrade then
+            EU_upgrade, tube_upgrade = technic.handle_machine_upgrades(meta)
+        end
+        if registration_context.def.tube then
+            technic.handle_machine_pipeworks(pos, tube_upgrade)
         end
 
         local powered = eu_input >= machine_demand[EU_upgrade + 1]
