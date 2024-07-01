@@ -4,7 +4,7 @@ local S = technic.getter
 minetest.register_craft({
 	output = 'technic:hv_grinder',
 	recipe = {
-		{'technic:carbon_plate',          'technic:mv_grinder',   'technic:composite_plate'},
+		{'technic:lv_grinder',          'technic:lv_grinder',   'technic:lv_grinder'},
 		{'pipeworks:tube_1',              'technic:hv_transformer', 'pipeworks:tube_1'},
 		{'technic:stainless_steel_ingot', 'technic:hv_cable',       'technic:stainless_steel_ingot'},
 	}
