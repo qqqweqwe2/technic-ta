@@ -34,25 +34,10 @@ return function(registration_context)
         local meta = minetest.get_meta(pos)
         if not meta then return end
 
-        if not meta:get_int("output_taken") then
-            meta:set_int("output_taken", 1)
-        end
-        if meta:get_int("output_taken") == 2 then
-            return
-        end
-
         machine_digilines.run(registration_context, pos, node)
         local inv = meta:get_inventory()
         local eu_input = meta:get_int(registration_context.def.tier .. "_EU_input")
         local machine_demand = registration_context.def.demand
-
-        -- Setup meta registration_context.def if it does not exist.
-        if not eu_input then
-            meta:set_int(registration_context.def.tier .. "_EU_demand", machine_demand[1])
-            meta:set_int(registration_context.def.tier .. "_EU_input", 0)
-            machine_state.set(meta, machine_state.STATE.UNPOWERED)
-            return
-        end
 
         local EU_upgrade, tube_upgrade = 0, 0
         if registration_context.def.upgrade then
@@ -60,6 +45,21 @@ return function(registration_context)
         end
         if registration_context.def.tube then
             technic.handle_machine_pipeworks(pos, tube_upgrade)
+        end
+
+        if not meta:get_int("output_taken") then
+            meta:set_int("output_taken", 1)
+        end
+        if meta:get_int("output_taken") == 2 then
+            return
+        end
+
+        -- Setup meta registration_context.def if it does not exist.
+        if not eu_input then
+            meta:set_int(registration_context.def.tier .. "_EU_demand", machine_demand[1])
+            meta:set_int(registration_context.def.tier .. "_EU_input", 0)
+            machine_state.set(meta, machine_state.STATE.UNPOWERED)
+            return
         end
 
         local powered = eu_input >= machine_demand[EU_upgrade + 1]
