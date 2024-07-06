@@ -22,16 +22,19 @@ local color_modes = {
 	{name = S("Dark Grey and Black"), index = 27, n = 4, ct = {"494949", "292929", "222222", "1b1b1b"}, trampoline = {15, 22, 23, 24}} -- 2 middle colors are swapped
 }
 
-minetest.register_node ("technic:paint_layer", {
+local paint_layer = "technic:paint_layer"
+local fluorescent_paint_layer = "technic:fluorescent_paint_layer"
+
+minetest.register_node (paint_layer, {
 	description = S("Paint"),
 	drawtype = "nodebox",
 	tiles = {"technic_paint.png"},
 	node_box = {
-			type = "wallmounted",
-			wall_bottom = {-0.5, -0.5, -0.5, 0.5, -0.49, 0.5},
-			wall_top = {-0.5, 0.49, -0.5, 0.5, 0.5, 0.5},
-			wall_side = {-0.5, -0.5, -0.5, -0.49, 0.5, 0.5},
-                },
+		type = "wallmounted",
+		wall_bottom = {-0.5, -0.5, -0.5, 0.5, -0.49, 0.5},
+		wall_top = {-0.5, 0.49, -0.5, 0.5, 0.5, 0.5},
+		wall_side = {-0.5, -0.5, -0.5, -0.49, 0.5, 0.5},
+	},
 	drop = "",
 	groups = {attached_node = 1, dig_immediate = 2, not_in_creative_inventory = 1, not_blocking_trains = 1},
 	paramtype = "light",
@@ -39,16 +42,16 @@ minetest.register_node ("technic:paint_layer", {
 	palette = "technic_paint_palette.png",
 })
 
-minetest.register_node ("technic:fluorescent_paint_layer", {
+minetest.register_node (fluorescent_paint_layer, {
 	description = S("Fluorescent Paint"),
 	drawtype = "nodebox",
 	tiles = {"technic_paint.png"},
 	node_box = {
-			type = "wallmounted",
-			wall_bottom = {-0.5, -0.5, -0.5, 0.5, -0.49, 0.5},
-			wall_top = {-0.5, 0.49, -0.5, 0.5, 0.5, 0.5},
-			wall_side = {-0.5, -0.5, -0.5, -0.49, 0.5, 0.5},
-                },
+		type = "wallmounted",
+		wall_bottom = {-0.5, -0.5, -0.5, 0.5, -0.49, 0.5},
+		wall_top = {-0.5, 0.49, -0.5, 0.5, 0.5, 0.5},
+		wall_side = {-0.5, -0.5, -0.5, -0.49, 0.5, 0.5},
+	},
 	drop = "",
 	groups = {attached_node = 1, dig_immediate = 2, not_in_creative_inventory = 1, not_blocking_trains = 1},
 	light_source = 5,
@@ -68,7 +71,7 @@ if minetest.get_modpath("ehlphabet") then
 		paramtype2 = "colorwallmounted",
 		palette = "technic_paint_palette.png",
 	})
-	
+
 	minetest.register_node(":ehlphabet:block_color_fluorescent", {
 		description = S("Ehlphabet Block (colored)"),
 		tiles = {"ehlphabet_000.png"},
@@ -79,133 +82,119 @@ if minetest.get_modpath("ehlphabet") then
 		paramtype2 = "colorwallmounted",
 		palette = "technic_paint_palette.png",
 	})
-
 end
 
-local function spray_painter_setmode(user, itemstack, meta, f)
+local function spray_painter_setmode(user, itemstack, is_fluorescent)
 	local player_name = user:get_player_name()
-	
-	if not meta then
-		meta = {mode = nil}
-	end
-	if not meta.mode then
-		minetest.chat_send_player(player_name, 
+
+	local mode = itemstack:get_definition()._spray_painter_mode
+
+	if mode == 0 then
+		minetest.chat_send_player(player_name,
 			S("Use while sneaking to change Spray Painter modes."))
-		meta.mode = 0
 	end
-	
-	meta.mode = meta.mode % 9 + 1
-	
-	local tool = "technic:spray_painter"
-	if f then
-		tool = "technic:fluorescent_spray_painter"
-	end
-	
-	minetest.chat_send_player(player_name, 
-		("Spray Painter: %s"):format(color_modes[meta.mode].name))
-	itemstack:set_name(tool .. "_" .. meta.mode);
-	itemstack:set_metadata(minetest.serialize(meta))
+
+	mode = mode % 9 + 1
+
+	local tool = is_fluorescent and "technic:fluorescent_spray_painter" or "technic:spray_painter"
+
+	itemstack:set_name(tool .. "_" .. mode);
+	minetest.chat_send_player(player_name,
+		S("Spray Painter") .. ": " .. color_modes[mode].name)
+
 	return itemstack
 end
 
 local function spray_paint(itemstack, user, pointed_thing, ptype)
-	
-	local meta = minetest.deserialize(itemstack:get_metadata())
 	local keys = user:get_player_control()
-	
+
+	local mode = itemstack:get_definition()._spray_painter_mode
+
 	if user.get_pos == nil then
 		-- we are held in a node breaker and it will not work
 		return itemstack
 	end
-	
-	if not meta or not meta.mode or keys.sneak then
-		return spray_painter_setmode(user, itemstack, meta, ptype)
+
+	if mode == 0 or keys.sneak then
+		return spray_painter_setmode(user, itemstack, ptype)
 	end
-	
-	if not meta or not meta.charge or meta.charge < spray_painter_cpa then
+
+	local charge = technic.get_RE_charge(itemstack)
+
+	if charge < spray_painter_cpa then
 		return itemstack
 	end
-	
-	
+
 	if pointed_thing.type ~= "node" then
 		return itemstack
 	end
-	
+
 	minetest.sound_play("technic_spray_painter", {
 		pos = user:get_pos(),
 		gain = 0.4,
 	})
-	
+
 	-- player needs to own both the wall and its surface
 	local pname = user:get_player_name()
-	if minetest.is_protected(pointed_thing.under, pname) or 
+	if minetest.is_protected(pointed_thing.under, pname) or
 		minetest.is_protected(pointed_thing.above, pname) then
 		minetest.record_protection_violation(pointed_thing.under, pname)
 		return itemstack
 	end
-	
-	local paint_name = "technic:paint_layer"
-	if ptype then
-		paint_name = "technic:fluorescent_paint_layer"
-	end
-	
-	local target = minetest.get_node_or_nil(pointed_thing.under) 
-	
+
+	local paint_name = ptype and fluorescent_paint_layer or paint_layer
+
+	local target = minetest.get_node_or_nil(pointed_thing.under)
+
 	local paintable = false
-	
+
 	-- target-specific code
 	if target then
-	
+
 		-- if pointing at ehlphabet block (regular or colored)
 		if (target.name == "ehlphabet:block" or target.name == "ehlphabet:block_color" or target.name == "ehlphabet:block_color_fluorescent") then
-		
+
 			if target.name == "ehlphabet:block" then
 				if not ptype then
 					minetest.swap_node(pointed_thing.under, { name = "ehlphabet:block_color" })
 				else
 					minetest.swap_node(pointed_thing.under, { name = "ehlphabet:block_color_fluorescent" })
 				end
-				target = minetest.get_node_or_nil(pointed_thing.under) 
+				target = minetest.get_node_or_nil(pointed_thing.under)
 			end
-			
+
 			paintable = true
-			
+
 		-- if pointing at plastic blocks
 		elseif minetest.get_item_group(target.name, "paintable_plastic_block") > 0 then
-			
 			paintable = true
-		
 		-- if the tool is pointed at a layer of paint -> cycling colors
-		elseif target.name == paint_name then	
-			
+		elseif target.name == paint_name then
 			paintable = true
-			
 		end
-		
+
 	end
-			
+
 	if paintable then
-		
 		local p2 = target.param2
 		local orientation = p2 % 8
 		local cindex = (p2 - orientation) / 8
 		local new_cindex = cindex + 1
-		if new_cindex < color_modes[meta.mode].index - 1 then
-			new_cindex = color_modes[meta.mode].index - 1
+		if new_cindex < color_modes[mode].index - 1 then
+			new_cindex = color_modes[mode].index - 1
 		end
-		if new_cindex > color_modes[meta.mode].index + (color_modes[meta.mode].n - 1) - 1 then
-			new_cindex = color_modes[meta.mode].index - 1
+		if new_cindex > color_modes[mode].index + (color_modes[mode].n - 1) - 1 then
+			new_cindex = color_modes[mode].index - 1
 		end
-		
+
 		minetest.swap_node(pointed_thing.under, {
-									name = target.name, 
+									name = target.name,
 									param2 = new_cindex*8 + orientation
 									})
-		
+
 		if not technic.creative_mode then
-			meta.charge = meta.charge - spray_painter_cpa
-			technic.set_RE_wear(itemstack, meta.charge, spray_painter_max_charge)
-			itemstack:set_metadata(minetest.serialize(meta))
+			charge = charge - spray_painter_cpa
+			technic.set_RE_charge(itemstack, charge)
 		end
 
 		return itemstack
@@ -213,8 +202,8 @@ local function spray_paint(itemstack, user, pointed_thing, ptype)
 		local p2 = target.param2
 		local orientation = p2 % 8
 		local cindex = (p2 - orientation) / 8
-		
-		local itable = color_modes[meta.mode].trampoline
+
+		local itable = color_modes[mode].trampoline
 		local new_cindex
 		local current
 		for i, e in ipairs(itable) do
@@ -228,24 +217,23 @@ local function spray_paint(itemstack, user, pointed_thing, ptype)
 		else
 			new_cindex = itable[(current % #itable) + 1]
 		end
-		
+
 		target.param2 = new_cindex*8 + orientation
 
 		minetest.swap_node(pointed_thing.under, target)
 
 		if not technic.creative_mode then
-			meta.charge = meta.charge - spray_painter_cpa
-			technic.set_RE_wear(itemstack, meta.charge, spray_painter_max_charge)
-			itemstack:set_metadata(minetest.serialize(meta))
+			charge = charge - spray_painter_cpa
+			technic.set_RE_charge(itemstack, charge)
 		end
 
 		return itemstack
 	end
-	
+
 	-- otherwise, spray some paint anew
-	
+
 	target = minetest.get_node_or_nil(pointed_thing.above)
-		
+
 	if not target or target.name ~= "air" then
 		return itemstack
 	end
@@ -253,54 +241,50 @@ local function spray_paint(itemstack, user, pointed_thing, ptype)
 	local diff = vector.subtract(pointed_thing.under, pointed_thing.above)
 	local wdr = minetest.dir_to_wallmounted(diff)
 	minetest.swap_node(pointed_thing.above, {
-								name = paint_name, 
-								param2 = (color_modes[meta.mode].index - 1) * 8 + wdr
-								})
+			name = paint_name,
+			param2 = (color_modes[mode].index - 1) * 8 + wdr
+	})
 
 	if not technic.creative_mode then
-		meta.charge = meta.charge - spray_painter_cpa
-		technic.set_RE_wear(itemstack, meta.charge, spray_painter_max_charge)
-		itemstack:set_metadata(minetest.serialize(meta))
+		charge = charge - spray_painter_cpa
+		technic.set_RE_charge(itemstack, charge)
 	end
 	return itemstack
-	
 end
-                                  
-technic.register_power_tool("technic:spray_painter", spray_painter_max_charge)
-minetest.register_tool("technic:spray_painter", {
-	description = ("Spray Painter"),
-	groups = {technic_tool = 1, technic_powertool = 1},
+
+technic.register_power_tool("technic:spray_painter", {
+	description = S("Spray Painter"),
 	inventory_image = "technic_spray_painter.png",
 	stack_max = 1,
-	wear_represents = "technic_RE_charge",
-	on_refill = technic.refill_RE_charge,
+	technic_max_charge = spray_painter_max_charge,
 	on_use = function(itemstack, user, pointed_thing)
 		spray_paint(itemstack, user, pointed_thing, false)
 		return itemstack
 	end,
+
+	_spray_painter_mode = 0
 })
 
 
 for i = 1, 9 do
-	technic.register_power_tool("technic:spray_painter_" .. i, spray_painter_max_charge)
-	minetest.register_tool("technic:spray_painter_" .. i, {
-		description = ("Spray Painter: %s"):format(color_modes[i].name),
-		groups = {technic_tool = 1, technic_powertool = 1},
+	technic.register_power_tool("technic:spray_painter_" .. i, {
+		description = S("Spray Painter") .. ": " .. color_modes[i].name,
 		inventory_image = "technic_spray_painter.png^technic_tool_mode" .. i .. ".png",
+		technic_max_charge = spray_painter_max_charge,
 		wield_image = "technic_spray_painter.png",
-		wear_represents = "technic_RE_charge",
-		on_refill = technic.refill_RE_charge,
 		groups = {not_in_creative_inventory = 1},
 		on_use = function(itemstack, user, pointed_thing)
 			spray_paint(itemstack, user, pointed_thing, false)
 			return itemstack
 		end,
+
+		_spray_painter_mode = i
 	})
 end
 
 
 -- Provide a crafting recipe
-local trigger = minetest.get_modpath("mesecons_button") and "mesecons_button:button_off" 
+local trigger = minetest.get_modpath("mesecons_button") and "mesecons_button:button_off"
 	or "default:mese_crystal_fragment"
 
 minetest.register_craft({
@@ -315,41 +299,39 @@ minetest.register_craft({
 
 -- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-technic.register_power_tool("technic:fluorescent_spray_painter", spray_painter_max_charge)
-minetest.register_tool("technic:fluorescent_spray_painter", {
-	description = ("Fluorescent Spray Painter"),
-	groups = {technic_tool = 1, technic_powertool = 1},
+technic.register_power_tool("technic:fluorescent_spray_painter", {
+	description = S("Fluorescent Spray Painter"),
 	inventory_image = "technic_spray_painter_fluorescent.png",
 	stack_max = 1,
-	wear_represents = "technic_RE_charge",
-	on_refill = technic.refill_RE_charge,
+	technic_max_charge = spray_painter_max_charge,
 	on_use = function(itemstack, user, pointed_thing)
 		spray_paint(itemstack, user, pointed_thing, true)
 		return itemstack
 	end,
+
+	_spray_painter_mode = 0
 })
 
 
 for i = 1, 9 do
-	technic.register_power_tool("technic:fluorescent_spray_painter_" .. i, spray_painter_max_charge)
-	minetest.register_tool("technic:fluorescent_spray_painter_" .. i, {
-		description = ("Fluorescent Spray Painter: %s"):format(color_modes[i].name),
-		groups = {technic_tool = 1, technic_powertool = 1},
-		inventory_image = "technic_spray_painter_fluorescent.png^technic_tool_mode" .. i .. ".png",
-		wield_image = "technic_spray_painter_fluorescent.png",
-		wear_represents = "technic_RE_charge",
-		on_refill = technic.refill_RE_charge,
+	technic.register_power_tool("technic:fluorescent_spray_painter_" .. i, {
+		description = S("Fluorescent Spray Painter") .. ": " .. color_modes[i].name,
 		groups = {not_in_creative_inventory = 1},
+		inventory_image = "technic_spray_painter_fluorescent.png^technic_tool_mode" .. i .. ".png",
+		technic_max_charge = spray_painter_max_charge,
+		wield_image = "technic_spray_painter_fluorescent.png",
 		on_use = function(itemstack, user, pointed_thing)
 			spray_paint(itemstack, user, pointed_thing, true)
 			return itemstack
 		end,
+
+		_spray_painter_mode = i
 	})
 end
 
 
 -- Provide a crafting recipe
-local trigger = minetest.get_modpath("mesecons_button") and "mesecons_button:button_off" 
+local trigger = minetest.get_modpath("mesecons_button") and "mesecons_button:button_off"
 	or "default:mese_crystal_fragment"
 
 minetest.register_craft({
