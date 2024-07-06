@@ -13,38 +13,22 @@ local planter_charge_per_object = 25
 
 local S = technic.getter
 
-local planter_mode_text = {
-	S("2 blocks wide planting"),
-	S("3 blocks wide planting"),
-	S("4 blocks wide planting"),
-	S("5 blocks wide planting"),
-	S("6 blocks wide planting"),
-	S("7 blocks wide planting"),
-}
-
-
 -- Mode switcher for the tool
-local function planter_setmode(user, itemstack, meta)
+local function planter_setmode(user, itemstack)
 	local player_name = user:get_player_name()
 
-	if not meta then
-		meta = {
-			mode = nil
-		}
-	end
-	if not meta.mode then
+	local mode = itemstack:get_definition()._planter_mode
+
+	if mode == 0 then
 		minetest.chat_send_player(player_name,
 			S("Use while sneaking to change Planter modes."))
-		meta.mode = 0
 	end
 
-	meta.mode = meta.mode % 6 + 1
+	mode = mode % 6 + 1
 
+	itemstack:set_name("technic:planter_" .. mode)
 	minetest.chat_send_player(player_name,
-		S("Planter Mode %d"):format(meta.mode) .. ": "
-		.. planter_mode_text[meta.mode])
-	itemstack:set_name("technic:planter_" .. meta.mode);
-	itemstack:set_metadata(minetest.serialize(meta))
+		S("Planter Mode @1: @2 blocks wide planting", mode, mode + 1))
 	return itemstack
 end
 
@@ -52,28 +36,23 @@ end
 -- Perform the planting action
 local function work_on_soil(itemstack, user, pointed_thing)
 
-	local meta = minetest.deserialize(itemstack:get_metadata())
+	local meta = itemstack:get_meta()
 	local keys = user:get_player_control()
 
-	if not meta or not meta.mode or keys.sneak then
-		return planter_setmode(user, itemstack, meta)
+	local mode = itemstack:get_definition()._planter_mode
+
+	if mode == 0 or keys.sneak then
+		return planter_setmode(user, itemstack)
 	end
 
-	meta.charge = meta.charge or 0
+	local charge = technic.get_RE_charge(itemstack)
+	local selected = meta:get_string("selected")
 
-	local offset = meta.mode
-	local offet_l = 0
-	local offet_r = 0
-	if offset % 2 > 0 then
-		offset_r = math.floor(offset/2) + 1
-		offset_l = math.floor(offset/2)
-	else
-		offset_r = offset / 2
-		offset_l = offset / 2
-	end
+	local offset = mode
+	local offset_r = math.floor(offset / 2)
+	local offset_l = offset - offset_r
 
-
-	if meta.charge < planter_charge_per_object * (offset+1) then
+	if charge < planter_charge_per_object * (offset+1) then
 		return -- no charge for a complete row
 	end
 
@@ -92,8 +71,8 @@ local function work_on_soil(itemstack, user, pointed_thing)
 	local player_name = user:get_player_name()
 	local inv = user:get_inventory()
 
-	if not inv:contains_item("main", ItemStack({name=meta.selected, count = offset + 1})) then
-		minetest.chat_send_player(player_name, S("Not enough " .. meta.selected .. " to continue!"))
+	if not inv:contains_item("main", ItemStack({name=selected, count = offset + 1})) then
+		minetest.chat_send_player(player_name, S("Not enough @1 to continue!", selected))
 		return itemstack
 	end
 
@@ -105,48 +84,26 @@ local function work_on_soil(itemstack, user, pointed_thing)
 
 	local c = 0
 
-	local ldir = 0
 	local udir = user:get_look_dir()
+	local dir_right
+	-- Negate the x axis and swap x and z axes to get a vector rotated by 90 degrees right
 	if math.abs(udir.x) > math.abs(udir.z) then
-		if udir.x > 0 then
-			ldir = 0 -- +X
-		else
-			ldir = 1 -- -X
-		end
+		dir_right = vector.new(0, 0, -math.sign(udir.x, 0.0))
 	else
-		if udir.z > 0 then
-			ldir = 2 -- +Z
-		else
-			ldir = 3 -- -Z
-		end
-	end
-
-	if ldir == 1 or ldir == 2 then
-		offset_r, offset_l = offset_l, offset_r
+		dir_right = vector.new(math.sign(udir.z, 0.0), 0, 0)
 	end
 
 	local work_pos = {}
-	for delta = -offset_l,offset_r,1 do
+	for rel_pos = -offset_l,offset_r do
 
-		if ldir > 1 then
-			-- along z axis value (x changes)
-			work_pos = {
-				type = "node",
-				under = {x = pointed_thing.under.x + delta, y = pointed_thing.under.y, z = pointed_thing.under.z},
-				above = {x = pointed_thing.under.x + delta, y = pointed_thing.under.y + 1, z = pointed_thing.under.z},
-				ref = nil
-			}
-		else
-			-- along x axis value (z changes)
-			work_pos = {
-				type = "node",
-				under = {x = pointed_thing.under.x, y = pointed_thing.under.y, z = pointed_thing.under.z + delta},
-				above = {x = pointed_thing.under.x, y = pointed_thing.under.y + 1, z = pointed_thing.under.z + delta},
-				ref = nil
-			}
-		end
+		work_pos = {
+			type = "node",
+			under = pointed_thing.under + dir_right * rel_pos,
+			above = pointed_thing.under + vector.new(0, 1, 0) + dir_right * rel_pos,
+			ref = nil
+		}
 
-		local k = (minetest.registered_items[meta.selected] or {on_place=minetest.item_place}).on_place(ItemStack({name=meta.selected, count=1}), user, work_pos)
+		local k = (minetest.registered_items[selected] or {on_place=minetest.item_place}).on_place(ItemStack({name=selected, count=1}), user, work_pos)
 
 		if k and k:get_count() == 0 then
 			c = c + 1
@@ -154,26 +111,23 @@ local function work_on_soil(itemstack, user, pointed_thing)
 	end
 
 
-	meta.charge = meta.charge - planter_charge_per_object * c
+	charge = charge - planter_charge_per_object * c
 
 	-- The charge won't expire in creative mode, but the tool still
 	-- has to be charged prior to use
 	if not technic.creative_mode then
-		inv:remove_item("main", ItemStack({name=meta.selected, count = c}))
-		technic.set_RE_wear(itemstack, meta.charge, planter_max_charge)
-		itemstack:set_metadata(minetest.serialize(meta))
+		inv:remove_item("main", ItemStack({name=selected, count = c}))
+		technic.set_RE_charge(itemstack, charge)
 	end
 	return itemstack
 end
 
 local function select_plant(itemstack, user, pointed_thing)
 	if not user or not user:is_player() or user.is_fake_player then return end
-	local meta = minetest.deserialize(itemstack:get_metadata())
+	local meta = itemstack:get_meta()
 
-	if not meta or not meta.selected then
-		meta = {}
-		meta.selected = "farming:seed_wheat"
-		itemstack:set_metadata(minetest.serialize(meta))
+	if not meta:contains("selected") then
+		meta:set_string("selected", "farming:seed_wheat")
 	end
 
 	minetest.show_formspec(user:get_player_name(), "technic:planter_control",
@@ -182,10 +136,10 @@ local function select_plant(itemstack, user, pointed_thing)
 		default.gui_bg_img ..
 		default.gui_slots ..
 		"label[0,0;Crops selected:\n(Press to change)]"..
-		"item_image_button[2,0;1,1;" .. meta.selected .. ";change;]" ..
+		"item_image_button[2,0;1,1;" .. meta:get_string("selected") .. ";change;]" ..
 		"button_exit[3,0;1,1;quit;Cancel]"..
 		"label[5,0;   \nChange to:]"..
-	      "list[current_player;main;7,0;1,1;31]" ..
+		"list[current_player;main;7,0;1,1;31]" ..
 		"list[current_player;main;0,1;8,1;]" ..
 		"list[current_player;main;0,2;8,3;8]" ..
 		default.get_hotbar_bg(0,1))
@@ -196,17 +150,14 @@ end
 minetest.register_on_player_receive_fields(function(user, formname, fields)
 
 	if formname ~= "technic:planter_control" then return false end
-	if not user or not user:is_player() or user.is_fake_player then return end
+
+	if not user or not user:is_player() or user.is_fake_player then return true end
+
 	local itemstack = user:get_wielded_item()
 	if not string.find(itemstack:get_name(), "^technic:planter") then return true end
 
 	if fields.quit then
-             return true
-	end
-
-	local meta = minetest.deserialize(itemstack:get_metadata())
-	if not meta then
-		meta = {}
+		return true
 	end
 
 	if fields.change then
@@ -214,42 +165,41 @@ minetest.register_on_player_receive_fields(function(user, formname, fields)
 		local item = inv:get_stack("main", 32) -- using the last cell
 		local n = item:get_name()
 		if n and n ~= "" then
-			meta.selected = n
+			local meta = itemstack:get_meta()
+			meta:set_string("selected", n)
 		end
+
+		user:set_wielded_item(itemstack)
+		select_plant(itemstack, user, nil)
 	end
 
-	itemstack:set_metadata(minetest.serialize(meta))
-	user:set_wielded_item(itemstack)
-	select_plant(itemstack, user, nil)
 	return true
 end)
 
 
 -- Register the tool and its varieties in the game
-technic.register_power_tool("technic:planter", planter_max_charge)
-minetest.register_tool("technic:planter", {
+technic.register_power_tool("technic:planter", {
 	description = ("Planter"),
-	groups = {technic_tool = 1, technic_powertool = 1},
 	inventory_image = "technic_planter.png",
 	stack_max = 1,
-	wear_represents = "technic_RE_charge",
-	on_refill = technic.refill_RE_charge,
+	technic_max_charge = planter_max_charge,
 	on_use = work_on_soil,
 	on_place = select_plant,
+
+	_planter_mode = 0,
 })
 
 for i = 1, 6 do
-	technic.register_power_tool("technic:planter_" .. i, planter_max_charge)
-	minetest.register_tool("technic:planter_" .. i, {
+	technic.register_power_tool("technic:planter_" .. i, {
 		description = ("Planter Mode %d"):format(i),
-		groups = {technic_tool = 1, technic_powertool = 1},
 		inventory_image = "technic_planter.png^technic_tool_mode" .. i .. ".png",
+		technic_max_charge = planter_max_charge,
 		wield_image = "technic_planter.png",
-		wear_represents = "technic_RE_charge",
-		on_refill = technic.refill_RE_charge,
 		groups = {not_in_creative_inventory = 1},
 		on_use = work_on_soil,
 		on_place = select_plant,
+
+		_planter_mode = i,
 	})
 end
 
