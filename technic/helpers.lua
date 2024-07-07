@@ -278,7 +278,7 @@ function technic.process_recipe(recipe, inv)
     if type(recipe.output) == "string" then recipe.output = {recipe.output} end
 	if type(recipe.output) == "userdata" then
 		minetest.log("warning", "recipe.output is userdata, possible it's an ItemStack: ", dump(recipe.output))
-		recipe.output = { ItemStack(recipe.output):get_name() }
+		recipe.output = { ItemStack(recipe.output):to_string() }
 	end
 	for _,item in ipairs(recipe.output) do
         local name = ItemStack(item):get_name()
