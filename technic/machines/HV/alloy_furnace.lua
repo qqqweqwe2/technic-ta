@@ -18,7 +18,6 @@ technic.register_base_machine("technic:hv_alloy_furnace", {
 	can_insert = technic.can_insert_unique_stack,
 	tier = "HV",
 	speed = 3,
-    upgrade = 1,
 	tube=1,
 	demand = {2000}
 })
