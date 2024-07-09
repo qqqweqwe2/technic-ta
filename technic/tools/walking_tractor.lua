@@ -27,7 +27,7 @@ local walking_tractor_mode_text = {
 }
 
 local ripe_for_harvest = {
-	"farming:barley_7",
+	"farming:barley_8",
 	"farming:beanpole_5",
 	"farming:beetroot_5",
 	"farming:blueberry_4",
