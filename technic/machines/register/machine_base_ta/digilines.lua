@@ -153,30 +153,19 @@ local function is_tubedevice_at(pos)
     return minetest.get_item_group(node.name, "tubedevice") > 0
 end
 
-local function items_table_to_set(t)
-    local set = {}
-    for _, l in ipairs(t) do set[l:get_name()] = true end
-    return set
-end
-
-local function get_items_to_eject(command_context, stack_list)
-    local items_to_eject = {}
-
+local function get_items_and_slots_to_eject(command_context)
+    local to_eject = {}
 
     if not command_context.items or next(command_context.items) == nil then
-        for _, item_stack in ipairs(stack_list) do
-            items_to_eject[item_stack:get_name()] = true
-        end
-        return items_to_eject
+        -- Eject all.
+        return true
     end
 
-    local inventory_items_set = items_table_to_set(stack_list)
-    for _, item_stack in ipairs(command_context.items) do
-        if inventory_items_set[item_stack:get_name()] then
-            items_to_eject[item_stack:get_name()] = true
-        end
+    for _, specifier in ipairs(command_context.items) do
+        -- Number-likes specify slots, others item names.
+        to_eject[tonumber(specifier) or specifier] = true
     end
-    return items_to_eject
+    return to_eject
 end
 
 local function handle_event__eject_input(command_context, _, pos)
@@ -188,7 +177,7 @@ local function handle_event__eject_input(command_context, _, pos)
     if command_context.command ~= DIGILINE_COMMAND.EJECT_INPUT then return false end
     local eject_direction = get_eject_direction(command_context, pos)
     if not eject_direction then return false end
-    local items_to_eject = get_items_to_eject(command_context, stack_list)
+    local to_eject = get_items_and_slots_to_eject(command_context)
     local eject_position = {
         x = pos.x + eject_direction.x,
         y = pos.y + eject_direction.y,
@@ -197,7 +186,7 @@ local function handle_event__eject_input(command_context, _, pos)
     local output_tube_connected = is_tubedevice_at(eject_position)
 
     for index, item_stack in ipairs(stack_list) do
-        if items_to_eject[item_stack:get_name()] then
+        if to_eject == true or to_eject[index] or to_eject[item_stack:get_name()] then
             if output_tube_connected then
                 technic.tube_inject_item(pos, pos, eject_direction, item_stack)
             else
