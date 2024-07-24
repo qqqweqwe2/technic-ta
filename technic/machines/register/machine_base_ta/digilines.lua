@@ -5,7 +5,7 @@ local machine_state = assert(loadfile(path .. "/state.lua"))()
 
 local machine_digilines = {}
 
-local DIGILINES_MSG_MAX_LENGTH = 32
+local DIGILINES_MSG_MAX_LENGTH = 200
 local DIGILINES_META_COMMAND_NAME = "digiline_command"
 local DIGILINES_META_CHANNEL_NAME = "digiline_channel"
 local DIGILINE_COMMAND = {
