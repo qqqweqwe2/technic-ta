@@ -33,7 +33,7 @@ function machine_digilines.get_formspec(pos)
     formspec[#formspec + 1] = ("field[6.3,0.15;2,1;%s;;${%s}]"):format(
         DIGILINES_META_CHANNEL_NAME, DIGILINES_META_CHANNEL_NAME)
     formspec[#formspec + 1] = "tooltip[5,0;3,0.75; \n" .. S("Digiline Channel (!advanced user setting!)") .. ":\n\n\t"
-    formspec[#formspec + 1] = "\n\t" .. S("You can choose a digiline channel to send and recieve messages.") .. "\n\t\t"
+    formspec[#formspec + 1] = "\n\t" .. S("You can choose a digiline channel to send and receive messages.") .. "\n\t\t"
     formspec[#formspec + 1] = S(" - When object is inside the machine, \"Starting\" digiline message is raised. ") ..
         "\n\t\t"
     formspec[#formspec + 1] = S(" - When crafting is done \"Ending\" digiline message is raised.") .. "\n\t\t"
@@ -46,7 +46,7 @@ function machine_digilines.get_formspec(pos)
             " * instead of top you can use: top/bottom/right/left/front/back, to eject the input to the respective direction from the machinery,") ..
         "\n\t\t\t"
     formspec[#formspec + 1] = S(
-        " * third parameter specifies comma separated slot(s) to eject (1, 2, ...), if omitted, all slots will be ejected")
+        " * third parameter specifies comma separated slot(s) or item(s) to eject (1, 2, ...), if omitted, all slots will be ejected")
     formspec[#formspec + 1] = "\n\n\t" .. S("Leave it empty when you don't use it.") .. "\n ]"
     return table.concat(formspec, "")
 end
