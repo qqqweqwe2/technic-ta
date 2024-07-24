@@ -217,14 +217,15 @@ local function handle_event__state(command_context, digiline_channel, pos)
     return true
 end
 
-local function get_current_action(current_state, previous_state)
+local function get_current_action(current_state)
     local translation_table = {
-        [machine_state.STATE.IDLE] = "Idle",
-        [machine_state.STATE.STARTED] = "Starting",
-        [machine_state.STATE.ACTIVE] = "Active",
-        [machine_state.STATE.STALLED] = "Stalled",
+        [machine_state.STATE.IDLE] = machine_state.STATE.IDLE,
+        [machine_state.STATE.STARTED] = machine_state.STATE.STARTING,
+        [machine_state.STATE.ACTIVE] = machine_state.STATE.ACTIVE,
+        [machine_state.STATE.STALLED] = machine_state.STATE.STALLED,
     }
-    return translation_table[current_state] and translation_table[current_state] or nil
+
+    return translation_table[current_state] or nil
 end
 
 local function handle_digiline_events(pos, meta, digiline_channel)
