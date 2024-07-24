@@ -179,7 +179,7 @@ local function get_items_to_eject(command_context, stack_list)
     return items_to_eject
 end
 
-local function hanlde_event__eject_input(command_context, _, pos)
+local function handle_event__eject_input(command_context, _, pos)
     local meta = minetest.get_meta(pos)
     local inv = meta:get_inventory()
     if not inv then return false end
@@ -245,7 +245,7 @@ local function handle_digiline_events(pos, meta, digiline_channel)
     if not command_context then return false end
     meta:set_string(DIGILINES_META_COMMAND_NAME, nil)
 
-    if hanlde_event__eject_input(command_context, digiline_channel, pos) then return true end
+    if handle_event__eject_input(command_context, digiline_channel, pos) then return true end
     if handle_event__state(command_context, digiline_channel, pos) then return true end
     return false
 end
