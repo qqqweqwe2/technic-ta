@@ -47,28 +47,26 @@ minetest.register_craft({
 
 
 local function make_reactor_formspec(meta)
-	local f =
-		"formspec_version[4]"..
-		"size[10.75,10.75]"..
-		"label[0.2,0.4;"..S("Nuclear Reactor Rod Compartment").."]"..
-		"label[0,0.3;"..minetest.colorize("#F00", S("Warning scramming reactor do not give fuel back -!-")).."]"..
-		"list[current_name;src;1.5,1;3,2;]"..
-		"list[current_player;main;0.5,5.5;8,4;]"..
-		"listring[]"..
-		"button[5.7,1;2,1;start;Start]"..
-		"checkbox[5.7,2.75;autostart;automatic Start;" .. meta:get_string("autostart") .. "]" ..
-		"button[5.5,2.5;2,1;scram;Scram]" -- ultra scram wowowow love it
+	local f = "size[8,9]"..
+	"label[0,0;"..S("Nuclear Reactor Rod Compartment").."]"..
+	"label[0,0.3;"..minetest.colorize("#F00", S("Warning scramming reactor do not give fuel back -!-")).."]"..
+	"list[current_name;src;2,1;3,2;]"..
+	"list[current_player;main;0,5;8,4;]"..
+	"listring[]"..
+	"button[5.5,1;2,1;start;Start]"..
+	"checkbox[5.5,1.5;autostart;Automatic Start;"..meta:get_string("autostart").."]"..
+	"button[5.5,2.5;2,1;scram;Scram]" -- ultra scram wowowow love it
 	if not digiline_remote_path then
 		return f
 	end
 	local digiline_enabled = meta:get_string("enable_digiline")
-	f = f.."checkbox[1.5,3.75;enable_digiline;Enable Digiline channel;"..digiline_enabled.."]"
+	f = f.."checkbox[0.5,2.8;enable_digiline;Enable Digiline;"..digiline_enabled.."]"
 	if digiline_enabled ~= "true" then
 		return f
 	end
 	return f..
-		"field[2,4.2;4.25,1;remote_channel;;${remote_channel}]" ..
-		"button_exit[6.5,4.2;2,1;save;Save]"
+		"button_exit[4.6,3.69;2,1;save;Save]"..
+		"field[1,4;4,1;remote_channel;Digiline Remote Channel;${remote_channel}]"
 end
 
 local SS_OFF = 0
@@ -345,11 +343,11 @@ end
 
 
 local function start_reactor(pos, meta)
-	local correct_fuel_count = 6
-	local msg_fuel_missing = "Error: You need to insert " .. correct_fuel_count .. " pieces of Uranium Fuel."
+	local necessary_fuel_count = 6
+	local msg_fuel_missing = "You need to insert " .. necessary_fuel_count .. " pieces of fuel."
 
 	if minetest.get_node(pos).name ~= "technic:hv_nuclear_reactor_core" then
-		return {false, "reactor is already active"}
+		return {false, "Reactor is already active"}
 	end
 	local inv = meta:get_inventory()
 	if inv:is_empty("src") then
@@ -360,10 +358,10 @@ local function start_reactor(pos, meta)
 
 	
 	local src_list = inv:get_list("src")
-	local fuel_count = 0
+	local correct_fuel_count = 0
 	for _, src_stack in pairs(src_list) do
 		if src_stack and src_stack:get_name() == normal_fuel or src_stack and src_stack:get_name() == plutonium_fuel then
-			fuel_count = fuel_count + 1
+			correct_fuel_count = correct_fuel_count + 1
 		end
 		if src_stack and src_stack:get_name() == berkelium_fuel or src_stack and src_stack:get_name() == californium_fuel then
 			if is_adv_struct(pos) then
@@ -371,19 +369,14 @@ local function start_reactor(pos, meta)
 			end
 		end
 	end
-	-- Check that the has the correct fuel
+	-- Check that the reactor is complete and has the correct fuel
 	if (reactor_structure_badness(pos) ~= 0 and adv_reactor_structure_badness(pos) ~= 0) then
 		return {false, "please verify the structure"}
 	end
 	if correct_fuel_count ~= 6 then
 		return {false, "not all fuel has been inserted: " .. correct_fuel_count .. "/6"}
 	end
-
-	-- Check that the reactor is complete
-	if reactor_structure_badness(pos) ~= 0 then
-		return {false, "Error: The power plant seems to be built incorrectly."}
-	end
-
+	
 	meta:set_int("burn_time", 1)
 	technic.swap_node(pos, "technic:hv_nuclear_reactor_core_active")
 	
@@ -540,7 +533,6 @@ local nuclear_reactor_receive_fields = function(pos, formname, fields, sender)
 	end
 	if fields.start then
 		local b = start_reactor(pos, meta)
-		local start_error_msg = start_reactor(pos, meta)
 		if b[1] then
 			minetest.chat_send_player(player_name, "Start successful: " .. b[2])
 		else
@@ -622,7 +614,7 @@ local digiline_remote_def = function(pos, channel, msg)
 			melt_down_reactor(pos)
 		end
 	elseif msg.command == "start" then
-		local start_error_msg = start_reactor(pos, meta)
+		local b = start_reactor(pos, meta)
 		if b[1] then
 			digiline_remote.send_to_node(pos, channel, "Start successful: ".. b[2], 6, true)
 		else
@@ -714,7 +706,7 @@ minetest.register_node("technic:hv_nuclear_reactor_core_active", {
 	end,
 	technic_on_disable = function(pos, node)
 		local timer = minetest.get_node_timer(pos)
-		timer:start(1)
+        	timer:start(1)
         end,
 	on_timer = function(pos, node)
 		local meta = minetest.get_meta(pos)
