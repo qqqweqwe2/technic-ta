@@ -45,8 +45,12 @@ local function work_on_soil(itemstack, user, pointed_thing)
 		return planter_setmode(user, itemstack)
 	end
 
-	local charge = technic.get_RE_charge(itemstack)
 	local selected = meta:get_string("selected")
+	if selected == "" then
+		return
+	end
+
+	local charge = technic.get_RE_charge(itemstack)
 
 	local offset = mode
 	local offset_r = math.floor(offset / 2)
@@ -122,28 +126,65 @@ local function work_on_soil(itemstack, user, pointed_thing)
 	return itemstack
 end
 
+local function update_plant_in_wielded_meta(player, plant_name)
+	local wielded_stack = player:get_wielded_item()
+	if not string.find(wielded_stack:get_name(), "^technic:planter") then
+		return
+	end
+
+	local meta = wielded_stack:get_meta()
+	meta:set_string("selected", plant_name)
+
+	player:set_wielded_item(wielded_stack)
+end
+
 local function select_plant(itemstack, user, pointed_thing)
 	if not user or not user:is_player() or user.is_fake_player then return end
 	local meta = itemstack:get_meta()
+	local player_name = user:get_player_name()
 
-	if not meta:contains("selected") then
-		meta:set_string("selected", "farming:seed_wheat")
+	local inv = minetest.create_detached_inventory("planter_" .. player_name, {
+		allow_move = function(inv, from_list, from_index, to_list, to_index, count, player)
+			return 0
+		end,
+		allow_put = function(inv, listname, index, stack, player)
+			if player:get_player_name() ~= player_name or listname ~= "crop" or index ~= 1 then
+				return 0
+			end
+
+			update_plant_in_wielded_meta(player, stack:get_name())
+
+			inv:set_stack(listname, index, ItemStack(stack:get_name()))
+
+			return 0
+		end,
+		allow_take = function(inv, listname, index, stack, player)
+			if player:get_player_name() ~= player_name then
+				return 0
+			end
+
+			update_plant_in_wielded_meta(player, "")
+
+			inv:set_stack(listname, index, ItemStack())
+
+			return 0
+		end
+	}, player_name)
+
+	inv:set_size("crop", 1)
+
+	local crop_name = meta:get("selected")
+	if crop_name then
+		inv:set_stack("crop", 1, ItemStack(crop_name))
 	end
 
 	minetest.show_formspec(user:get_player_name(), "technic:planter_control",
 		"size[8,5]"..
-		default.gui_bg ..
-		default.gui_bg_img ..
-		default.gui_slots ..
-		"label[0,0;Crops selected:\n(Press to change)]"..
-		"item_image_button[2,0;1,1;" .. meta:get_string("selected") .. ";change;]" ..
-		"button_exit[3,0;1,1;quit;Cancel]"..
-		"label[5,0;   \nChange to:]"..
-		"list[current_player;main;7,0;1,1;31]" ..
-		"list[current_player;main;0,1;8,1;]" ..
-		"list[current_player;main;0,2;8,3;8]" ..
+		"label[0,0;   \nCrops selected:]" ..
+		"list[detached:planter_"..player_name..";crop;2,0;1,1;]" ..
+		"button_exit[7,0;1,1;quit;Cancel]" ..
+		"list[current_player;main;0,1;8,4;]" ..
 		default.get_hotbar_bg(0,1))
-	return
 end
 
 
@@ -157,20 +198,8 @@ minetest.register_on_player_receive_fields(function(user, formname, fields)
 	if not string.find(itemstack:get_name(), "^technic:planter") then return true end
 
 	if fields.quit then
+		minetest.remove_detached_inventory("planter_"..user:get_player_name())
 		return true
-	end
-
-	if fields.change then
-		local inv = user:get_inventory()
-		local item = inv:get_stack("main", 32) -- using the last cell
-		local n = item:get_name()
-		if n and n ~= "" then
-			local meta = itemstack:get_meta()
-			meta:set_string("selected", n)
-		end
-
-		user:set_wielded_item(itemstack)
-		select_plant(itemstack, user, nil)
 	end
 
 	return true
