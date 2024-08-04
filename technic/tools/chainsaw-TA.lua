@@ -31,12 +31,13 @@ local tree_nodes = {
 	["df_trees:tunnel_tube_fruiting_body"] = -1,
 
 	["ethereal:bamboo"] = -1,
+	["ethereal:basandra_bush_stem"] = -1,
 }
-
 local leaves_nodes = {
 	["ethereal:mushroom"]      = -1,
 	["ethereal:mushroom_pore"] = -1,
 }
+
 local tree_nodes_by_cid = {
 	-- content ID indexed table, data populated on mod load.
 	-- Format: [node_name] = cost_number
@@ -126,10 +127,10 @@ local pos9dir = {
 }
 
 local function merge_tables(table1, table2)
-    local result = table.copy(table1)
-    for _, v in pairs(table2) do
-        table.insert(result, v)
-    end
+	local result = table.copy(table1)
+	for _, v in pairs(table2) do
+		table.insert(result, v)
+	end
 	return result
 end
 
@@ -152,14 +153,8 @@ local function handle_one_drop(pos, cutter)
 		local stack = ItemStack(dropped_node)
 		cutter.drops[stack:get_name()] = (cutter.drops[stack:get_name()] or 0) + stack:get_count()
 	end
-	local node_def = minetest.registered_nodes[node.name]
-	minetest.remove_node(pos)
-	if node_def and node_def.after_destruct then
-		node_def.after_destruct(pos, node)
-	end
 end
 
-local c_air = minetest.get_content_id("air")
 local function process_digged_item(pos, cutter)
 	local i = cutter.area:index(pos.x, pos.y, pos.z)
 	if cutter.seen[i] then
@@ -176,7 +171,8 @@ local function process_digged_item(pos, cutter)
 	-- Count dug nodes
 	handle_one_drop(pos, cutter)
 	cutter.seen[i] = 2 -- Mark as dug (for callbacks)
-	cutter.data[i] = c_air
+	cutter.data[i] = minetest.CONTENT_AIR
+	cutter.param2[i] = 0
 	cutter.charge = cutter.charge - cost
 
 	-- Expand maximal bounds for area protection check
@@ -193,9 +189,9 @@ local function get_tree_node_type_at(pos)
 	local node = minetest.get_node(pos)
 	local node_def = minetest.registered_nodes[node.name]
 	if not node_def then return nil end
-	if node_def.groups.tree then
+	if node_def.groups.tree or tree_nodes[node.name] then
 		return "tree"
-	elseif node_def.groups.leaves then
+	elseif node_def.groups.leaves or leaves_nodes[node.name] then
 		return "leaves"
 	elseif node_def.groups.leafdecay_drop then
 		return "leafdecay_drop"
@@ -293,7 +289,7 @@ local function get_drop_pos(pos)
 	return pos
 end
 
-handle_drops = function(pos, cutter)
+local function handle_drops(pos, cutter)
 	local n_slots = 100
 	local drop_inv = minetest.create_detached_inventory("technic:chainsaw_drops", {}, ":technic")
 	drop_inv:set_size("main", n_slots)
@@ -349,19 +345,39 @@ local function chainsaw_dig(player, pos, cutter)
 
 	handle_drops(pos, cutter)
 
+	local old_data = cutter.vm:get_data()
+	local old_light_data = cutter.vm:get_light_data()
+	local old_param2_data = cutter.vm:get_param2_data()
+
 	cutter.vm:set_data(cutter.data)
+	cutter.vm:set_param2_data(cutter.param2)
 	cutter.vm:write_to_map(true)
 	cutter.vm:update_map()
+
+	minetest.fix_light(cutter.minp, cutter.maxp)
 
 	-- Update falling nodes
 	for i, status in pairs(cutter.seen) do
 		if status == 2 then -- actually dug
+			local old_node_name = minetest.get_name_from_content_id(old_data[i])
+			local old_node_def = minetest.registered_nodes[old_node_name]
+			local node = { name = old_node_name, param1 = old_light_data[i], param2 = old_param2_data[i] }
+			if old_node_def then
+				local pos_cur = cutter.area:position(i)
+				if old_node_def.after_destruct then
+					old_node_def.after_destruct(pos_cur, node)
+				end
+				if old_node_def.after_dig_node then
+					old_node_def.after_dig_node(pos_cur, node, {}, player)
+				end
+			end
+
 			minetest.check_for_falling(cutter.area:position(i))
 		end
 	end
 end
 
-local create_cutter_object = function(init_chainsaw_data, chainsaw_obj, pos)
+local function create_cutter_object(init_chainsaw_data, chainsaw_obj, pos)
 	local minp = {
 		x = pos.x - (init_chainsaw_data.tree_max_radius + 1),
 		y = pos.y,
@@ -376,8 +392,6 @@ local create_cutter_object = function(init_chainsaw_data, chainsaw_obj, pos)
 	local vm = minetest.get_voxel_manip()
 	local emin, emax = vm:read_from_map(minp, maxp)
 
-	local meta = technic.get_stack_meta(chainsaw_obj)
-
 	return {
 		area = VoxelArea:new { MinEdge = emin, MaxEdge = emax },
 		vm = vm,
@@ -387,10 +401,11 @@ local create_cutter_object = function(init_chainsaw_data, chainsaw_obj, pos)
 		drops = {}, -- [content_id] = count
 		minp = vector.copy(pos),
 		maxp = vector.copy(pos),
-		charge = meta:get_int("technic:charge"),
+		charge = technic.get_RE_charge(chainsaw_obj),
 	}
 end
-local chainsaw_on_use = function(init_chainsaw_data)
+
+local function chainsaw_on_use(init_chainsaw_data)
 	return function(chainsaw_obj, user, pointed_thing)
 		if pointed_thing.type ~= "node" then
 			return chainsaw_obj
@@ -410,9 +425,7 @@ local chainsaw_on_use = function(init_chainsaw_data)
 		chainsaw_dig(user, pointed_thing.under, cutter)
 
 		if not technic.creative_mode then
-			local meta = technic.get_stack_meta(chainsaw_obj)
-			meta:set_int("technic:charge", cutter.charge)
-			technic.set_RE_wear(chainsaw_obj, cutter.charge, init_chainsaw_data.max_charge)
+			technic.set_RE_charge(chainsaw_obj, cutter.charge)
 		end
 		return chainsaw_obj
 	end
@@ -473,12 +486,11 @@ local chainsaws_data = {
 }
 
 for _, chainsaw in ipairs(chainsaws_data) do
-	minetest.register_tool(chainsaw.name, {
+	technic.register_power_tool(chainsaw.name, {
 		description = chainsaw.description,
 		inventory_image = chainsaw.inventory_image,
 		stack_max = 1,
-		wear_represents = "technic_RE_charge",
-		on_refill = technic.refill_RE_charge,
+		technic_max_charge = chainsaw.max_charge,
 		on_use = chainsaw_on_use(chainsaw),
 	})
 
@@ -487,5 +499,4 @@ for _, chainsaw in ipairs(chainsaws_data) do
 		recipe = chainsaw.recipe,
 		replacements = chainsaw.replacements,
 	})
-	technic.register_power_tool(chainsaw.name, chainsaw.max_charge)
 end
