@@ -18,6 +18,9 @@ This table is filled automatically afterwards to support mods such as:
 ]]
 local tree_nodes = {
 	-- For the sake of maintenance, keep this sorted alphabetically!
+	["aotearoa:kokomuka_stem"] = -1,
+	["aotearoa:leatherwood_stem"] = -1,
+
 	["default:acacia_bush_stem"] = -1,
 	["default:bush_stem"] = -1,
 	["default:pine_bush_stem"] = -1,
