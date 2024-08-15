@@ -52,4 +52,22 @@ minetest.override_item("technic:hv_sawmill", {
 	},
     tiles = {"technic_hv_sawmill_top.png","technic_hv_sawmill_bottom.png","technic_hv_sawmill_side.png","technic_hv_sawmill_side.png","technic_hv_sawmill_back.png","technic_hv_sawmill_front.png"},
 })
+
+minetest.override_item("technic:hv_sawmill_active", {
+    drawtype = "nodebox",
+	node_box = {
+		type = "fixed",
+		fixed = {
+			{-3/32, 14/32, -1/32, 3/32, 15/32, 1/32},
+			{-6/32, 13/32, -1/32, 6/32, 14/32, 1/32},
+			{-8/32, 12/32, -1/32, 8/32, 13/32, 1/32},
+			{-9/32, 11/32, -1/32, 9/32, 12/32, 1/32},
+			{-10/32, 10/32, -1/32, 10/32, 11/32, 1/32},
+			{-11/32, 9/32, -1/32, 11/32, 10/32, 1/32},
+			{-12/32, 7/32, -1/32, 12/32, 9/32, 1/32},
+			{-1/2, -1/2, -1/2, 1/2, 7/32, 1/2},
+		},
+	},
+    tiles = {"technic_hv_sawmill_top.png","technic_hv_sawmill_bottom.png","technic_hv_sawmill_side.png","technic_hv_sawmill_side.png","technic_hv_sawmill_back.png","technic_hv_sawmill_front.png"},
+})
 end)
