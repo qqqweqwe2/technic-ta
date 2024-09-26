@@ -22,6 +22,13 @@ local color_modes = {
 	{name = S("Dark Grey and Black"), index = 27, n = 4, ct = {"494949", "292929", "222222", "1b1b1b"}, trampoline = {15, 22, 23, 24}} -- 2 middle colors are swapped
 }
 
+-- Nodes to use the trampoline palette
+technic.alternate_paintable_nodes = {
+	["technic:trampoline"] = true,
+	["xdecor:curtain_white"] = true,
+	["xdecor:curtain_open_white"] = true,
+}
+
 local paint_layer = "technic:paint_layer"
 local fluorescent_paint_layer = "technic:fluorescent_paint_layer"
 
@@ -198,7 +205,7 @@ local function spray_paint(itemstack, user, pointed_thing, ptype)
 		end
 
 		return itemstack
-	elseif target and target.name == "technic:trampoline" or target and (target.name == "xdecor:curtain_white" or target.name == "xdecor:curtain_open_white") then
+	elseif target and technic.alternate_paintable_nodes[target.name] then
 		local p2 = target.param2
 		local orientation = p2 % 8
 		local cindex = (p2 - orientation) / 8

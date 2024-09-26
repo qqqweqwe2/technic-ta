@@ -17,6 +17,7 @@ dofile(path.."/plastic_block.lua")
 --dofile(path.."/diamonds.lua")
 dofile(path.."/insulator_clips.lua")
 dofile(path.."/cottonseed_oil.lua")
+dofile(path.."/slippery.lua")
 
 if minetest.get_modpath("ethereal") and minetest.get_modpath("flowers") then
 	dofile(path.."/antishroom.lua")
