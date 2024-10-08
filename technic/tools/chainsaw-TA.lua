@@ -21,6 +21,8 @@ local tree_nodes = {
 	["aotearoa:kokomuka_stem"] = -1,
 	["aotearoa:leatherwood_stem"] = -1,
 
+	["australia:waratah_stem"] = -1,
+
 	["default:acacia_bush_stem"] = -1,
 	["default:bush_stem"] = -1,
 	["default:pine_bush_stem"] = -1,
