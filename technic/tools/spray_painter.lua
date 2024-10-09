@@ -91,6 +91,56 @@ if minetest.get_modpath("ehlphabet") then
 	})
 end
 
+-- Alter node definition to be paintable by the spray painter using the trampoline palette.
+function technic.make_alternate_paintable(nodename)
+	-- Apply palette index of itemstack, if set. This is needed because `place_param2`
+	-- otherwise overrides unconditionally.
+	local paintable_after_place_node = function(pos, placer, itemstack, pointed_thing)
+		local palette_index = tonumber(itemstack:to_table().meta.palette_index)
+		if palette_index then
+			local node = minetest.get_node(pos)
+			node.param2 = palette_index
+			minetest.swap_node(pos, node)
+		end
+	end
+
+	local ndef = minetest.registered_nodes[nodename]
+	assert(ndef, "Node does not exist: " .. nodename)
+
+	local new_def = {}
+
+	if not ndef.paramtype2 or ndef.paramtype2 == "none" then
+		new_def.paramtype2 = "color"
+	elseif ndef.paramtype2 == "4dir"
+		or ndef.paramtype2 == "facedir"
+		or ndef.paramtype2 == "wallmounted" then
+		new_def.paramtype2 = "color" .. ndef.paramtype2
+	else
+		assert(false, "Unsupported paramtype2 in " .. nodename)
+	end
+
+	assert(not ndef.place_param2, "place_param2 would be overridden in " .. nodename)
+	new_def.place_param2 = 88
+
+	if not ndef.after_place_node then
+		new_def.after_place_node = paintable_after_place_node
+	else
+		-- Wrap existing function
+		local old_fun = ndef.after_place_node
+		new_def.after_place_node = function(...)
+			paintable_after_place_node(...)
+			return old_fun(...)
+		end
+	end
+
+	assert(not ndef.palette, "palette would be overridden in " .. nodename)
+	new_def.palette = "technic_trampoline_palette.png"
+	
+	minetest.override_item(nodename, new_def, {})
+
+	technic.alternate_paintable_nodes[nodename] = true
+end
+
 local function spray_painter_setmode(user, itemstack, is_fluorescent)
 	local player_name = user:get_player_name()
 

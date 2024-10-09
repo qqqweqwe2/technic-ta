@@ -35,10 +35,6 @@ for i, data in ipairs(levels) do
 	
 	minetest.register_node(name, {
 		description = data.name,
-		paramtype2 = "color",
-		-- Default color white
-		place_param2 = 88,
-		after_place_node = after_place_node,
 		tiles = {
 			{
 				name = "technic_slippery_aluminum_" .. i .. ".png",
@@ -49,10 +45,9 @@ for i, data in ipairs(levels) do
 		is_ground_content = false,
 		groups = {cracky = 1, level = 2, slippery = data.slippery},
 		sounds = default.node_sound_metal_defaults(),
-		palette = "technic_trampoline_palette.png",
 	})
 
-	technic.alternate_paintable_nodes[name] = true
+	technic.make_alternate_paintable(name)
 
 	local upper = name
 	local lower
