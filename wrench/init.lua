@@ -82,6 +82,7 @@ minetest.register_on_mods_loaded(function()
 			newdef.description = S("%s with items"):format(newdef.description)
 			newdef.groups = {}
 			newdef.groups.not_in_creative_inventory = 1
+            newdef.groups.bag = 1
 			newdef.on_construct = nil
 			newdef.on_destruct = nil
 			newdef.after_place_node = restore
