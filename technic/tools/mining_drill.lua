@@ -52,38 +52,30 @@ local function get_description(mk, mode)
 	return mode > 0 and S(description, mk, mode) or S(description, mk)
 end
 
-local function drill_dig_it0 (pos,player)
+local function drill_dig_it0(pos, player)
 	if minetest.is_protected(pos, player:get_player_name()) then
 		minetest.record_protection_violation(pos, player:get_player_name())
 		return
 	end
 	local node = minetest.get_node(pos)
-	if node.name == "air" or node.name == "ignore" then return end
-	if node.name == "digtron:loaded_locked_crate" or node.name == "digtron:loaded_crate" then return end -- causes corruption of metadata
-	if node.name == "default:lava_source" then return end
-	if node.name == "default:lava_flowing" then return end
-	if node.name == "drawers:acacia_wood4" then return end
-	if node.name == "drawers:acacia_wood2" then return end
-	if node.name == "drawers:acacia_wood1" then return end
-	if node.name == "drawers:aspen_wood4" then return end
-	if node.name == "drawers:aspen_wood2" then return end
-	if node.name == "drawers:aspen_wood1" then return end
-	if node.name == "drawers:junglewood4" then return end
-	if node.name == "drawers:junglewood4" then return end
-	if node.name == "drawers:junglewood4" then return end
-	if node.name == "drawers:pine_wood4" then return end
-	if node.name == "drawers:pine_wood2" then return end
-	if node.name == "drawers:pine_wood1" then return end
-	if node.name == "drawers:wood4" then return end
-	if node.name == "drawers:wood2" then return end
-	if node.name == "drawers:wood1" then return end
-	if node.name == mat.lava_source then return end
-	if node.name == mat.lava_flowing then return end
-	if node.name == mat.water_source then minetest.remove_node(pos) return end
-	if node.name == mat.water_flowing then minetest.remove_node(pos) return end
-	local def = minetest.registered_nodes[node.name]
-	if not def then return end
-	def.on_dig(pos, node, player)
+	local ndef = minetest.registered_nodes[node.name]
+	if not ndef or ndef.drawtype == "airlike" then
+		-- Covers "air", "ignore", unknown nodes and more.
+		return
+	end
+	local groups = ndef and ndef.groups or {}
+
+	if groups.lava then
+		return
+	end
+	if groups.drawer or groups.digtron_protected then
+		return
+	end
+	if groups.water then
+		minetest.remove_node(pos)
+		return
+	end
+	ndef.on_dig(pos, node, player)
 end
 
 local function drill_dig_it1 (player)
