@@ -120,8 +120,21 @@ local function register_recipe(typename, data)
 
 end
 
-function technic.register_recipe(typename, data)
-	minetest.after(0.01, register_recipe, typename, data) -- Handle aliases
+-- Postpone registration until aliases can be handled.
+do
+	local recipes = {}
+
+	minetest.register_on_mods_loaded(function()
+		for _, recipe in ipairs(recipes) do
+			register_recipe(unpack(recipe))
+		end
+		recipes = nil
+	end)
+		
+	function technic.register_recipe(typename, data)
+		assert(recipes, "it is too late to register recipes!")
+		table.insert(recipes, {typename, data})
+	end
 end
 
 local air_item = ItemStack("air 1");
