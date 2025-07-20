@@ -53,7 +53,7 @@ local function get_recipe_index(items)
 	return table.concat(l, "/")
 end
 
-local function register_recipe(typename, data)
+local function register_recipe(typename, data, no_guide)
 	-- Handle aliases
 	for i, stack in ipairs(data.input) do
 		data.input[i] = ItemStack(stack):to_string()
@@ -78,7 +78,7 @@ local function register_recipe(typename, data)
 	end
 
 	technic.recipes[typename].recipes[index] = recipe
-	if have_ui and technic.recipes[typename].output_size == 1 then
+	if have_ui and technic.recipes[typename].output_size == 1 and not no_guide then
 		unified_inventory.register_craft({
 			type = typename,
 			output = data.output,
@@ -86,7 +86,7 @@ local function register_recipe(typename, data)
 			width = 0,
 		})
 	end
-	if (have_cg or have_i3) and technic.recipes[typename].output_size == 1 then
+	if (have_cg or have_i3) and technic.recipes[typename].output_size == 1 and not no_guide then
 		local result = data.output
 		if (type(result)=="table") then
 			result = result[1]
@@ -108,7 +108,7 @@ local function register_recipe(typename, data)
 		end
 	end
 
-	if unified_inventory and technic.recipes[typename].output_size > 1 then
+	if unified_inventory and technic.recipes[typename].output_size > 1 and not no_guide then
 		local short_output = data.output[1]
 		unified_inventory.register_craft({
 			type = typename,
