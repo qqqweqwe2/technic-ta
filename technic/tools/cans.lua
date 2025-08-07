@@ -31,9 +31,9 @@ technic.cans = {
 		can_name = "technic:freshwater_can",
 		can_description = S("Freshwater Can"),
 		can_inventory_image = "technic_freshwater_can.png",
-		can_capacity = 16,
+		can_capacity = 5,
 		liquid_source_name = "default:river_water_source",
-		liquid_flowing_name = "default:river_water_flowing",
+		liquid_flowing_name = "default:river_water_source",
 		recipe = {
 			{'default:tin_ingot', 'technic:rubber',    'default:tin_ingot'},
 			{'default:tin_ingot', '',                  'default:tin_ingot'},
@@ -126,6 +126,9 @@ function technic.register_can(d)
 				return
 			end
 			minetest.remove_node(pointed_thing.under)
+            if data.can_name == "technic:freshwater_can" then
+                minetest.set_node(pointed_thing.under, {name = "default:river_water_source"})
+            end
 			charge = charge + 1
 			meta:set_int("can_level", charge)
 			set_can_wear(itemstack, charge, data.can_capacity)
