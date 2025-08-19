@@ -31,7 +31,6 @@ return function(registration_context)
         if not meta then return end
 
         machine_digilines.run(registration_context, pos, node)
-        local inv = meta:get_inventory()
         local eu_input = meta:get_int(registration_context.def.tier .. "_EU_input")
         local machine_demand = registration_context.def.demand
 
@@ -62,6 +61,13 @@ return function(registration_context)
         if powered then
             meta:set_int("src_time", meta:get_int("src_time") + round(registration_context.def.speed * 10))
         end
+
+        local inv = meta:get_inventory()
+        if not inv:get_list("src") then
+            meta:set_string("infotext", "Machine is borked")
+            return
+        end
+
         start_random_seed(meta)
         while true do
             local recipe = inv:get_list("src") and
