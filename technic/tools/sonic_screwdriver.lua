@@ -58,7 +58,16 @@ local function screwdriver_handler(itemstack, user, pointed_thing, mode)
 		rotationPart = nextrange(axisdir, 5) * 4
 	end
 
-	node.param2 = preservePart + rotationPart
+	local new_param2 = preservePart + rotationPart
+
+	if ndef.on_rotate then
+		local result = ndef.on_rotate(vector.copy(pos), table.copy(node), user, mode, new_param2)
+		if result ~= nil then
+			return
+		end
+	end
+
+	node.param2 = new_param2
 	minetest.swap_node(pos, node)
 
 	return itemstack
