@@ -165,6 +165,15 @@ local function allow_inventory_put(pos, listname, index, stack, player)
 	if stack and minetest.get_item_group(stack:get_name(), "technic_constructor") == 1 then
 		return 0
 	end
+	if stack then
+		local name = stack:get_name()
+		if minetest.get_item_group(name, "spawn_egg") > 0
+		or minetest.get_item_group(name, "egg") > 0
+		or name:find(":spawn_", 1, true)
+		or name:find("_set", 1, true) then
+			return 0
+		end
+	end
 	return technic.machine_inventory_put(pos, listname, index, stack, player)
 end
 
