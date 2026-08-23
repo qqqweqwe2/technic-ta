@@ -117,32 +117,30 @@ function machine_digilines.on_receive_fields(_, pos, _, fields, _)
 end
 
 local function get_eject_direction(command_context, pos)
-    local directions_table = {
-        ["top"] = { x = 0, y = 1, z = 0 },
-        ["bottom"] = { x = 0, y = -1, z = 0 },
-        ["front"] = 1,
-        ["right"] = 2,
-        ["back"] = 3,
-        ["left"] = 4,
-    }
-    local rotations_table = {
-        { x = 0,  y = 0, z = -1 },
-        { x = -1, y = 0, z = 0 },
-        { x = 0,  y = 0, z = 1 },
-        { x = 1,  y = 0, z = 0 },
-    }
-
-    local direction = directions_table[command_context.direction or "top"]
-    if direction == nil then return nil end
-
-    if type(direction) == "table" then
-        return direction
+    local name = command_context.direction or "top" -- default is top
+    if name == "top" then
+        return { x = 0, y = 1, z = 0 }
+    elseif name == "bottom" then
+        return { x = 0, y = -1, z = 0 }
+    elseif name ~= "front" and name ~= "right" and name ~= "back" and name ~= "left" then
+        return nil
     end
+
     local node = minetest.get_node(pos)
     if not node then return nil end
     local node_def = minetest.registered_nodes[node.name]
     if not node_def then return nil end
-    return rotations_table[(direction + node.param2) % 4]
+
+    local back = minetest.facedir_to_dir(node.param2)
+    local right = pipeworks.facedir_to_right_dir(node.param2)
+    if name == "back" then
+        return back
+    elseif name == "front" then
+        return { x = -back.x, y = -back.y, z = -back.z }
+    elseif name == "right" then
+        return right
+    end
+    return { x = -right.x, y = -right.y, z = -right.z }
 end
 
 local function is_tubedevice_at(pos)

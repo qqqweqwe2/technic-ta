@@ -87,6 +87,13 @@ function technic.send_items(pos, x_velocity, z_velocity, output_name, full,is_pe
 		is_percent = false
 	end
 
+	local vel
+	if type(x_velocity) == "table" then
+		vel = x_velocity
+	else
+		vel = vector.new(x_velocity, 0, z_velocity)
+	end
+
 	local meta = minetest.get_meta(pos)
 	local inv = meta:get_inventory()
 
@@ -128,7 +135,7 @@ function technic.send_items(pos, x_velocity, z_velocity, output_name, full,is_pe
 					end
 
 					if is_to_send then
-						technic.tube_inject_item(pos, pos, vector.new(x_velocity, 0, z_velocity), item0)
+						technic.tube_inject_item(pos, pos, vel, item0)
 						stack:clear()
 						if is_percent  then
 							meta:set_string("clock_last_send"..tostring(cursor), nil)
@@ -142,7 +149,7 @@ function technic.send_items(pos, x_velocity, z_velocity, output_name, full,is_pe
 					end
 				else
 					item0["count"] = "1"
-					technic.tube_inject_item(pos, pos, vector.new(x_velocity, 0, z_velocity), item0)
+					technic.tube_inject_item(pos, pos, vel, item0)
 					stack:take_item(1)
 					inv:set_stack(output_name, cursor, stack)
 					if output_name == "dst" then
@@ -195,19 +202,10 @@ function technic.handle_machine_pipeworks(pos, tube_upgrade, send_function)
 
 	local node = minetest.get_node(pos)
 	local meta = minetest.get_meta(pos)
-	--local inv = meta:get_inventory()     unused?
-	local pos1 = vector.new(pos)
-	local x_velocity = 0
-	local z_velocity = 0
-
 	-- The machines shall always eject items to the right side
 	-- This will be easy to remember, since the destination inventory is always on the right as well
-
-	if node.param2 == 3 then pos1.z = pos1.z + 1  z_velocity =  1 end
-	if node.param2 == 2 then pos1.x = pos1.x - 1  x_velocity = -1 end
-	if node.param2 == 1 then pos1.z = pos1.z - 1  z_velocity = -1 end
-	if node.param2 == 0 then pos1.x = pos1.x + 1  x_velocity =  1 end
-
+	local dir = pipeworks.facedir_to_right_dir(node.param2)
+	local pos1 = vector.add(pos, dir)
 
 	local output_tube_connected = false
 	local node1 = minetest.get_node(pos1)
@@ -233,7 +231,7 @@ function technic.handle_machine_pipeworks(pos, tube_upgrade, send_function)
 	if tube_time >= 2 then
 		tube_time = 0
 		if output_tube_connected then
-			send_function(pos, x_velocity, z_velocity, nil, send_stack,is_percent)
+			send_function(pos, dir, dir.z, nil, send_stack,is_percent)
 		end
 	end
 	meta:set_int("tube_time", tube_time)
@@ -316,4 +314,3 @@ function technic.machine_inventory_move(pos, from_list, from_index,
 	local stack = minetest.get_meta(pos):get_inventory():get_stack(from_list, from_index)
 	return inv_change(pos, player, count, from_list, to_list, stack)
 end
-
