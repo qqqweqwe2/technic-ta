@@ -3,6 +3,7 @@
 
 local S = technic_cnc.getter
 local ALPHA_CLIP = minetest.features.use_texture_alpha_string_modes and "clip" or true
+local recycling_registered = {}
 
 -- REGISTER NONCUBIC FORMS, CREATE MODELS AND RECIPES:
 ------------------------------------------------------
@@ -98,8 +99,8 @@ technic_cnc.programs = {
 		model = "technic_cnc_sphere.obj",
 		desc  = S("Sphere")
 	},
-	
-	
+
+
 	{ suffix  = "technic_cnc_sphere_half",
 		model = "technic_cnc_sphere_half.obj",
 		desc  = S("Half Sphere"),
@@ -110,7 +111,7 @@ technic_cnc.programs = {
 			}
 		}
 	},
-	
+
 	{ suffix  = "technic_cnc_sphere_quarter",
 		model = "technic_cnc_sphere_quarter.obj",
 		desc  = S("Quarter Sphere"),
@@ -121,7 +122,7 @@ technic_cnc.programs = {
 			}
 		}
 	},
-	
+
 	{ suffix  = "technic_cnc_cylinder_half_corner",
 		model = "technic_cnc_cylinder_half_corner.obj",
 		desc  = S("Half Cylinder Corner"),
@@ -142,31 +143,31 @@ technic_cnc.programs = {
 		model = "technic_cnc_one_curved_edge.obj",
 		desc  = S("One Curved Edge Block")
 	},
-	
+
 	{ suffix  = "technic_cnc_innercurvededge",
 		model = "technic_cnc_inner_curved_edge.obj",
 		desc  = S("Inner Curved Edge Block")
 	},
-	
+
 	{ suffix  = "technic_cnc_opposedcurvededge",
 		model = "technic_cnc_opposed_curved_edge.obj",
 		desc  = S("Opposed Curved Edges Block")
 	},
-	
+
 	-- large radius
 
 	{ suffix  = "technic_cnc_onecurvededge_lr",
 		model = "technic_cnc_one_curved_edge_lr.obj",
 		desc  = S("One Curved Edge LR Block")
 	},
-	
+
 	{ suffix  = "technic_cnc_twocurvededge_lr",
 		model = "technic_cnc_two_curved_edge_lr.obj",
 		desc  = S("Two Curved Edges LR Block")
 	},
-	
+
 	-- 4/16 Diagonal truss
-	
+
 	{ suffix  = "technic_cnc_diagonal_truss",
 		model = "technic_cnc_diagonal_truss.obj",
 		desc  = S("Diagonal Truss"),
@@ -177,7 +178,7 @@ technic_cnc.programs = {
 			}
 		}
 	},
-		
+
 	{ suffix  = "technic_cnc_diagonal_truss_cross",
 		model  = "technic_cnc_diagonal_truss_cross.obj",
 		desc  = S("Diagonal Truss Cross"),
@@ -188,9 +189,9 @@ technic_cnc.programs = {
 			}
 		}
 	},
-	
+
 	-- 2/16 Beams
-	
+
 	{ suffix  = "technic_cnc_beam216",
 		model = "technic_cnc_beam_216.obj",
 		desc  = S("2/16 Beam"),
@@ -201,7 +202,7 @@ technic_cnc.programs = {
 			}
 		}
 	},
-	
+
 	{ suffix  = "technic_cnc_beam216_cross",
 		model = "technic_cnc_beam_216_cross.obj",
 		desc  = S("2/16 Beam Cross"),
@@ -212,7 +213,7 @@ technic_cnc.programs = {
 			}
 		}
 	},
-	
+
 	{ suffix  = "technic_cnc_beam216_tee",
 		model = "technic_cnc_beam_216_tee.obj",
 		desc  = S("2/16 Beam T"),
@@ -223,7 +224,7 @@ technic_cnc.programs = {
 			}
 		}
 	},
-	
+
 	{ suffix  = "technic_cnc_beam216_cross_column",
 		model = "technic_cnc_beam_216_cross_column.obj",
 		desc  = S("2/16 Beam Cross with Column"),
@@ -234,7 +235,7 @@ technic_cnc.programs = {
 			}
 		}
 	},
-	
+
 	-- 2/16 slope panel
 
 
@@ -251,9 +252,9 @@ technic_cnc.programs = {
 			}
 		}
 	},
-	
+
 	-- 2/16 Arch
-	
+
 	{ suffix  = "technic_cnc_arch216",
 		model = "technic_cnc_arch_216.obj",
 		desc  = S("2/16 Arch"),
@@ -300,7 +301,7 @@ technic_cnc.programs_disable = {
 
 -- Allow enabling only few select programs
 technic_cnc.programs_enable = {
-	
+
 	["default:glass"] = {"technic_cnc_d45_slope_216", "technic_cnc_arch216"},
 	["default:obsidian_glass"] = {"technic_cnc_d45_slope_216", "technic_cnc_arch216"},
 	["moreblocks:clean_glass"] = {"technic_cnc_d45_slope_216", "technic_cnc_arch216"},
@@ -310,6 +311,7 @@ technic_cnc.programs_enable = {
 
 -- Generic function for registering all the different node types
 function technic_cnc.register_program(recipeitem, suffix, model, groups, images, description, cbox, sbox)
+	local shaped_name = recipeitem.."_"..suffix
 
 	local dtype
 	local nodeboxdef
@@ -328,7 +330,7 @@ function technic_cnc.register_program(recipeitem, suffix, model, groups, images,
 
 	if cbox and not sbox then sbox = cbox end
 
-	minetest.register_node(":"..recipeitem.."_"..suffix, {
+	minetest.register_node(":"..shaped_name, {
 		description   = description,
 		drawtype      = dtype,
 		node_box      = nodeboxdef,
@@ -343,6 +345,24 @@ function technic_cnc.register_program(recipeitem, suffix, model, groups, images,
 		collision_box = cbox,
 		light_source  = groups.light_source,
 	})
+
+	local output_count = technic_cnc.output_counts[suffix]
+	if output_count and not recycling_registered[shaped_name] then
+		recycling_registered[shaped_name] = true
+		local ingredients = {}
+		for i = 1, output_count do
+			ingredients[i] = shaped_name
+		end
+		minetest.register_craft({
+			type = "shapeless",
+			output = recipeitem,
+			recipe = ingredients,
+		})
+
+		if circular_saw and circular_saw.register_recycling then
+			circular_saw.register_recycling(shaped_name, recipeitem, output_count)
+		end
+	end
 end
 
 -- function to iterate over all the programs the CNC machine knows
@@ -357,7 +377,7 @@ function technic_cnc.register_all(recipeitem, groups, images, description)
 				end
 			end
 		end
-		
+
 		if technic_cnc.programs_enable[recipeitem] ~= nil then
 			do_register = false
 			for __, enable in ipairs(technic_cnc.programs_enable[recipeitem]) do
@@ -366,7 +386,7 @@ function technic_cnc.register_all(recipeitem, groups, images, description)
 				end
 			end
 		end
-		
+
 		-- Create the node if it passes the test
 		if do_register then
 			technic_cnc.register_program(recipeitem, data.suffix, data.model,
@@ -427,4 +447,3 @@ function technic_cnc.register_elements(recipeitem, groups, images, desc_element_
          technic_cnc.register_element_cross_double(recipeitem, groups, images, desc_element_cross_double)
          technic_cnc.register_element_end_double(recipeitem, groups, images, desc_element_end_double)
 end
-

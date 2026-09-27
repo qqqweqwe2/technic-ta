@@ -114,6 +114,19 @@ local twosize_products = {
 	element_edge             = 2,
 }
 
+technic_cnc.output_counts = {}
+for program, count in pairs(onesize_products) do
+	local two_size_count = twosize_products[program]
+	if two_size_count then
+		count = two_size_count * 2
+	end
+	technic_cnc.output_counts["technic_cnc_" .. program] = count
+end
+
+-- overriding these shapes because crafting them directly into a visually much larger block is very unrealistic. Sadly, this means that with these shapes, material loss is possible, but these diagonals require a weird cut!
+technic_cnc.output_counts.technic_cnc_arch216 = 4
+technic_cnc.output_counts.technic_cnc_d45_slope_216 = 4
+
 local cnc_formspec =
 	"size[11,11;]"..
 	"label[0,0;"..S("Choose Milling Program:").."]"..
@@ -140,7 +153,7 @@ local cnc_formspec =
 	"image_button[8,1.5;1,1;technic_cnc_sphere.png;sphere; ]"..
 	"image_button[9,1.5;1,1;technic_cnc_sphere_half.png;sphere_half; ]"..
 	"image_button[10,1.5;1,1;technic_cnc_sphere_quarter.png;sphere_quarter; ]"..
-	
+
 	"image_button[0,2.5;1,1;technic_cnc_twocurvededge_lr.png;twocurvededge_lr; ]"..
 	"image_button[1,2.5;1,1;technic_cnc_onecurvededge.png;onecurvededge; ]"..
 	"image_button[2,2.5;1,1;technic_cnc_twocurvededge.png;twocurvededge; ]"..
