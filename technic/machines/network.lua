@@ -375,7 +375,7 @@ end
 -- Functions to traverse the electrical network
 --
 
--- Add a machine node to the LV/MV/HV network
+-- Add a machine node to the LV/HV network
 local function add_network_machine(nodes, pos, network_id, all_nodes, multitier)
 	local node_id = poshash(pos)
 	local net_id_old = technic_cables[node_id]
@@ -389,7 +389,7 @@ local function add_network_machine(nodes, pos, network_id, all_nodes, multitier)
 	end
 end
 
--- Add a wire node to the LV/MV/HV network
+-- Add a wire node to the LV/HV network
 local function add_cable_node(pos, network)
 	local node_id = poshash(pos)
 	if not technic_cables[node_id] then

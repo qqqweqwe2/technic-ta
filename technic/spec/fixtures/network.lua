@@ -45,7 +45,6 @@ sourcefile("machines/overload")
 
 sourcefile("machines/register/cables")
 sourcefile("machines/LV/cables")
-sourcefile("machines/MV/cables")
 sourcefile("machines/HV/cables")
 
 function get_network_fixture(sw_pos)
