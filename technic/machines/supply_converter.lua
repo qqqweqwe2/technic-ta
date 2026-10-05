@@ -1,6 +1,8 @@
 -- The supply converter is a generic device which can convert from
--- LV to MV and back, and HV to MV and back.
+-- LV to HV and back.
 -- The machine is configured by the wiring below and above it.
+-- It comes in 3 sizes - normal, large and very large.
+-- Larger sizes has larger power output and better efficiency.
 --
 -- It works like this:
 --   The top side is setup as the receiver side, the bottom as the producer side.
@@ -37,6 +39,29 @@ local function set_supply_converter_formspec(meta)
 	meta:set_string("formspec", formspec)
 end
 
+-- Maximal power
+local supply_power = {10000, 60000, 300000}
+-- Conversion efficiency
+local supply_eff = {0.90, 0.95, 0.98}
+
+local supply_converter_index = function (pos)
+	if minetest.get_node(pos).name == "technic:supply_converter2" then
+		return 2
+	end
+	if minetest.get_node(pos).name == "technic:supply_converter3" then
+		return 3
+	end
+	return 1
+end
+
+local supply_converter_max = function (pos)
+	return supply_power[supply_converter_index(pos)]
+end
+
+local supply_converter_efficiency = function (pos)
+	return supply_eff[supply_converter_index(pos)]
+end
+
 local supply_converter_receive_fields = function(pos, formname, fields, sender)
 	if not sender or minetest.is_protected(pos, sender:get_player_name()) then
 		return
@@ -46,7 +71,7 @@ local supply_converter_receive_fields = function(pos, formname, fields, sender)
 	if fields.power then
 		power = tonumber(fields.power) or 0
 		power = math.max(power, 0)
-		power = math.min(power, 10000)
+		power = math.min(power, supply_converter_max(pos))
 		power = 100 * math.floor(power / 100)
 		if power == meta:get_int("power") then power = nil end
 	end
@@ -108,7 +133,7 @@ local digiline_def = {
 					return
 				end
 				power = math.max(power, 0)
-				power = math.min(power, 10000)
+				power = math.min(power, supply_converter_max(pos))
 				power = 100 * math.floor(power / 100)
 				meta:set_int("power", power)
 			elseif msg:sub(1, 12) == "mesecon_mode" then
@@ -127,7 +152,7 @@ local run = function(pos, node, run_stage)
 		return
 	end
 
-	local remain = 0.9
+	local remain = supply_converter_efficiency(pos)
 	-- Machine information
 	local machine_name  = S("Supply Converter")
 	local meta          = minetest.get_meta(pos)
@@ -170,37 +195,43 @@ local run = function(pos, node, run_stage)
 
 end
 
-minetest.register_node("technic:supply_converter", {
-	description = S("Supply Converter"),
-	tiles  = {
-		"technic_supply_converter_tb.png"..cable_entry,
-		"technic_supply_converter_tb.png"..cable_entry,
-		"technic_supply_converter_side.png",
-		"technic_supply_converter_side.png",
-		"technic_supply_converter_side.png",
-		"technic_supply_converter_side.png"
-		},
-	groups = {snappy=2, choppy=2, oddly_breakable_by_hand=2,
-		technic_machine=1, technic_all_tiers=1, axey=2, handy=1},
-	_mcl_blast_resistance = 1,
-	_mcl_hardness = 0.8,
-	connect_sides = {"top", "bottom"},
-	sounds = technic.sounds.node_sound_wood_defaults(),
-	on_receive_fields = supply_converter_receive_fields,
-	on_construct = function(pos)
-		local meta = minetest.get_meta(pos)
-		meta:set_string("infotext", S("Supply Converter"))
-		meta:set_int("power", 10000)
-		meta:set_int("enabled", 1)
-		meta:set_int("mesecon_mode", 0)
-		meta:set_int("mesecon_effect", 0)
-		set_supply_converter_formspec(meta)
-	end,
-	mesecons = mesecons,
-	digiline = digiline_def,
-	technic_run = run,
-	technic_on_disable = run,
-})
+local register_converter = function (node_name, side_tx, index, conv_description)
+	minetest.register_node(node_name, {
+		description = conv_description,
+		tiles  = {
+			"technic_supply_converter_tb.png"..cable_entry,
+			"technic_supply_converter_tb.png"..cable_entry,
+			side_tx,
+			side_tx,
+			side_tx,
+			side_tx
+			},
+		groups = {snappy=2, choppy=2, oddly_breakable_by_hand=2,
+			technic_machine=1, technic_all_tiers=1, axey=2, handy=1},
+		_mcl_blast_resistance = 1,
+		_mcl_hardness = 0.8,
+		connect_sides = {"top", "bottom"},
+		sounds = technic.sounds.node_sound_wood_defaults(),
+		on_receive_fields = supply_converter_receive_fields,
+		on_construct = function(pos)
+			local meta = minetest.get_meta(pos)
+			meta:set_string("infotext", conv_description)
+			meta:set_int("power", supply_power[index])
+			meta:set_int("enabled", 1)
+			meta:set_int("mesecon_mode", 0)
+			meta:set_int("mesecon_effect", 0)
+			set_supply_converter_formspec(meta)
+		end,
+		mesecons = mesecons,
+		digiline = digiline_def,
+		technic_run = run,
+		technic_on_disable = run,
+	})
+end
+
+register_converter("technic:supply_converter", "technic_supply_converter_side.png", 1, S("Supply Converter"))
+register_converter("technic:supply_converter2", "technic_supply_converter2_side.png", 2, S("Supply Converter (Mk2)"))
+register_converter("technic:supply_converter3", "technic_supply_converter3_side.png", 3, S("Supply Converter (Mk3)"))
 
 minetest.register_craft({
 	output = 'technic:supply_converter 1',
@@ -212,7 +243,27 @@ minetest.register_craft({
 	replacements = { {"basic_materials:gold_wire", "basic_materials:empty_spool"}, },
 })
 
+minetest.register_craft({
+	output = 'technic:supply_converter2 1',
+	recipe = {
+		{'technic:supply_converter', 'technic:supply_converter', 'technic:supply_converter'},
+		{'technic:control_logic_unit_gold', 'default:copperblock', 'technic:control_logic_unit_gold'},
+		{'technic:hv_cable', 'elements:thallium_ingot', 'technic:lv_cable'},
+	},
+})
+
+minetest.register_craft({
+	output = 'technic:supply_converter3 1',
+	recipe = {
+		{'technic:supply_converter2', 'technic:supply_converter2', 'technic:supply_converter2'},
+		{'elements:hafnium_ingot', 'default:diamondblock', 'elements:rhenium_ingot'},
+		{'technic:hv_cable', 'elements:thallium_ingot', 'technic:lv_cable'},
+	},
+})
+
 for tier, machines in pairs(technic.machines) do
 	technic.register_machine(tier, "technic:supply_converter", technic.producer_receiver)
+	technic.register_machine(tier, "technic:supply_converter2", technic.producer_receiver)
+	technic.register_machine(tier, "technic:supply_converter3", technic.producer_receiver)
 end
 
