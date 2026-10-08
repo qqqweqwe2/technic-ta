@@ -33,7 +33,8 @@ minetest.register_craftitem(":technic:antishroom",{
 						["ethereal:mushroom_dirt"]  = "default:dirt_with_grass",
 						["ethereal:mushroom_trunk"] = "default:tree",
 						["ethereal:mushroom"]       = "default:leaves",
-						["ethereal:mushroom_pore"]  = "default:apple"
+						["ethereal:mushroom_pore"]  = "default:apple",
+						["ethereal:spore_grass"]  = "default:grass_4"
 					}
 					
 			local mlist = {}
