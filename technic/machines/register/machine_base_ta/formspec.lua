@@ -103,6 +103,7 @@ return function(registration_context, pos)
         formspec[#formspec + 1] = "listring[current_player;main]"
         formspec[#formspec + 1] = "listring[context;upgrade2]"
         formspec[#formspec + 1] = "listring[current_player;main]"
+        formspec[#formspec + 1] = technic.upgrade_formspec(("%f,%f"):format(formspec_context.container.x, formspec_context.container.y))
     end
     formspec[#formspec + 1] = ("container[%f,%f]"):format(formspec_context.container.x, formspec_context.container.y)
     if registration_context.def.upgrade then

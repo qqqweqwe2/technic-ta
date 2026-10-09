@@ -4,6 +4,11 @@ local gold_unit = assert(loadfile(technic.modpath .. "/machines/register/machine
 
 -- handles the machine upgrades every tick
 function technic.handle_machine_upgrades(meta)
+	-- Most machines cannot handle EU_upgrade > 2
+	return technic.handle_machine_upgrades_limit(meta, 2)
+end
+
+function technic.handle_machine_upgrades_limit(meta, EU_limit)
 	-- Get the names of the upgrades
 	local inv = meta:get_inventory()
 
@@ -15,30 +20,55 @@ function technic.handle_machine_upgrades(meta)
 
 	-- Save some power by installing battery upgrades.
 	-- Tube loading speed can be upgraded using control logic units.
+	-- tool charging speed can be upgraded
 	local EU_upgrade = 0
 	local tube_upgrade = 0
+	local charge_upgrade = 0
 
-	if upg_item1 == "technic:control_logic_unit" then
-		tube_upgrade = tube_upgrade + 1
-	elseif upg_item1 == "technic:control_logic_unit_adv" then
-		tube_upgrade = tube_upgrade + 6
-	elseif upg_item1 == gold_unit.item_name then
-		tube_upgrade = tube_upgrade + gold_unit.upgrade_increment_number
-	elseif upg_item1 == "technic:battery" then
-		EU_upgrade = EU_upgrade + 1
+	local upg_items = {upg_item1, upg_item2}
+	for i=1, 2 do
+		upg_item = upg_items[i]
+		if upg_item == "technic:control_logic_unit" then
+			tube_upgrade = tube_upgrade + 1
+		elseif upg_item == "technic:control_logic_unit_adv" then
+			tube_upgrade = tube_upgrade + 6
+		elseif upg_item == gold_unit.item_name then
+			tube_upgrade = tube_upgrade + gold_unit.upgrade_increment_number
+		elseif upg_item == "technic:battery" then
+			EU_upgrade = EU_upgrade + 1
+		elseif upg_item == "technic:red_energy_crystal" then -- 0.4M
+			EU_upgrade = EU_upgrade + 2
+		elseif upg_item == "technic:green_energy_crystal" then -- 0.7M
+			EU_upgrade = EU_upgrade + 3
+		elseif upg_item == "technic:blue_energy_crystal" then -- 1M
+			EU_upgrade = EU_upgrade + 4
+		elseif upg_item == "powerbanks:powerbank_mk1" then -- 0.3M
+			EU_upgrade = EU_upgrade + 2
+			charge_upgrade = charge_upgrade + 1
+		elseif upg_item == "powerbanks:powerbank_mk2" then -- 0.6M
+			EU_upgrade = EU_upgrade + 3
+			charge_upgrade = charge_upgrade + 2
+		elseif upg_item == "powerbanks:powerbank_mk3" then -- 1.2M
+			EU_upgrade = EU_upgrade + 4
+			charge_upgrade = charge_upgrade + 4
+		elseif upg_item == "powerbanks:powerbank_mk4" then -- 5M
+			EU_upgrade = EU_upgrade + 10
+			charge_upgrade = charge_upgrade + 8
+		elseif upg_item == "powerbanks:powerbank_mk5" then -- 10M
+			EU_upgrade = EU_upgrade + 20
+			charge_upgrade = charge_upgrade + 16
+		elseif upg_item == "default:mese_crystal" then
+			charge_upgrade = charge_upgrade + 1
+		elseif upg_item == "default:mese" then
+			charge_upgrade = charge_upgrade + 5
+		end
 	end
 
-	if upg_item2 == "technic:control_logic_unit" then
-		tube_upgrade = tube_upgrade + 1
-	elseif upg_item2 == "technic:control_logic_unit_adv" then
-		tube_upgrade = tube_upgrade + 6
-	elseif upg_item2 == gold_unit.item_name then
-		tube_upgrade = tube_upgrade + tube_upgrade + gold_unit.upgrade_increment_number
-	elseif  upg_item2 == "technic:battery" then
-		EU_upgrade = EU_upgrade + 1
+	if EU_limit > 0 and EU_upgrade > EU_limit then
+		EU_upgrade = EU_limit
 	end
 
-	return EU_upgrade, tube_upgrade
+	return EU_upgrade, tube_upgrade, charge_upgrade
 end
 
 -- handles the machine upgrades when set or removed
@@ -47,12 +77,22 @@ local function on_machine_upgrade(meta, stack)
 	if stack_name == "default:chest" then
 		meta:set_int("public", 1)
 		return 1
-    elseif stack_name == gold_unit.item_name then
+	elseif stack_name == gold_unit.item_name then
 		gold_unit.init_meta(meta)
 		return 1
 	elseif stack_name ~= "technic:control_logic_unit"
+	and stack_name ~= "technic:red_energy_crystal"
+	and stack_name ~= "technic:green_energy_crystal"
+	and stack_name ~= "technic:blue_energy_crystal"
+	and stack_name ~= "powerbanks:powerbank_mk1"
+	and stack_name ~= "powerbanks:powerbank_mk2"
+	and stack_name ~= "powerbanks:powerbank_mk3"
+	and stack_name ~= "powerbanks:powerbank_mk4"
+	and stack_name ~= "powerbanks:powerbank_mk5"
+	and stack_name ~= "default:mese_crystal"
+	and stack_name ~= "default:mese"
 	and stack_name ~= "technic:control_logic_unit_adv"
-	   and stack_name ~= "technic:battery" then
+	and stack_name ~= "technic:battery" then
 		return 0
 	end
 	return 1

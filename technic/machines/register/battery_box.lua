@@ -106,6 +106,19 @@ local tube = {
 	connect_sides = {left=1, right=1, back=1, top=1},
 }
 
+function technic.battery_upgrade_formspec()
+    local formspec = {}
+    formspec[#formspec + 1] = "tooltip[3.5,3;2,1.3; \n" .. S("Accepted upgrades") .. ":\n\t"
+    formspec[#formspec + 1] = S("Chest: make machine public") .. "\n\t"
+    formspec[#formspec + 1] = S("Battery: slightly larger capacity") .. "\n\t"
+    formspec[#formspec + 1] = S("Red, Green and Blue energy crystals: larger capacity") .. "\n\t"
+    formspec[#formspec + 1] = S("Powerbanks Mk1 to Mk5: larger capacity, increased charge rate") .. "\n\t"
+    formspec[#formspec + 1] = S("Control Logic units: auto-send charged items to tubes") .. "\n\t"
+    formspec[#formspec + 1] = S("Mese crystal: slightly increased charge rate") .. "\n\t"
+    formspec[#formspec + 1] = S("Mese block: increased charge rate") .. "\n ]"
+    return table.concat(formspec, "")
+end
+
 function technic.register_battery_box(nodename, data)
 	local colon, modname, name, def = technic.register_compat_v1_to_v2(nodename, data, "battery_box")
 	local texture_prefix = modname.."_"..name
@@ -128,7 +141,8 @@ function technic.register_battery_box(nodename, data)
 		(def.upgrade and
 			"list[context;upgrade1;3.5,3;1,1;]"..
 			"list[context;upgrade2;4.5,3;1,1;]"..
-			"label[3.5,4;"..S("Upgrade Slots").."]"
+			"label[3.5,4;"..S("Upgrade Slots").."]"..
+			technic.battery_upgrade_formspec()
 			or "")
 
 	if minetest.get_modpath("mcl_formspec") then
@@ -186,7 +200,7 @@ function technic.register_battery_box(nodename, data)
 		local current_charge = meta:get_int("internal_EU_charge")
 		local EU_upgrade = 0
 		if def.upgrade then
-			EU_upgrade = technic.handle_machine_upgrades(meta)
+			EU_upgrade = technic.handle_machine_upgrades_limit(meta, -1)
 		end
 		local max_charge = def.max_charge * (1 + EU_upgrade / 10)
 		-- Select node textures
@@ -281,9 +295,9 @@ function technic.register_battery_box(nodename, data)
 		local eu_input       = meta:get_int(tier.."_EU_input")
 		local current_charge = meta:get_int("internal_EU_charge")
 
-		local EU_upgrade, tube_upgrade = 0, 0
+		local EU_upgrade, tube_upgrade, charge_upgrade = 0, 0, 0
 		if def.upgrade then
-			EU_upgrade, tube_upgrade = technic.handle_machine_upgrades(meta)
+			EU_upgrade, tube_upgrade, charge_upgrade = technic.handle_machine_upgrades_limit(meta, -1)
 		end
 		local max_charge = def.max_charge * (1 + EU_upgrade / 10)
 
@@ -296,8 +310,10 @@ function technic.register_battery_box(nodename, data)
 
 		-- Charging/discharging tools here
 		local tool_full, tool_empty
-		current_charge, tool_full = charge_tools(meta, current_charge, def.charge_step)
-		current_charge, tool_empty = discharge_tools(meta, current_charge, def.discharge_step, max_charge)
+
+		local step_mult = 1 + charge_upgrade
+		current_charge, tool_full = charge_tools(meta, current_charge, def.charge_step * step_mult)
+		current_charge, tool_empty = discharge_tools(meta, current_charge, def.discharge_step * step_mult, max_charge)
 
 		if def.tube and (tool_full or tool_empty) then
 			technic.handle_machine_pipeworks(pos, tube_upgrade, function(pos2, x_velocity, z_velocity)
@@ -433,7 +449,7 @@ function technic.register_battery_box(nodename, data)
 							supply = meta:get_int(tier.."_EU_supply"),
 							input  = meta:get_int(tier.."_EU_input"),
 							charge = meta:get_int("internal_EU_charge"),
-							max_charge = def.max_charge * (1 + technic.handle_machine_upgrades(meta) / 10),
+							max_charge = def.max_charge * (1 + technic.handle_machine_upgrades_limit(meta, -1) / 10),
 							src      = inv:get_stack("src", 1):to_table(),
 							dst      = inv:get_stack("dst", 1):to_table(),
 							upgrade1 = inv:get_stack("upgrade1", 1):to_table(),

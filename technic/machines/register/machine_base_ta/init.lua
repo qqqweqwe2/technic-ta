@@ -24,6 +24,17 @@ function technic.new_default_tube()
     }
 end
 
+function technic.upgrade_formspec(pos)
+    local formspec = {}
+    formspec[#formspec + 1] = "tooltip["..pos..";4,1.4; \n" .. S("Accepted upgrades") .. ":\n\t"
+    formspec[#formspec + 1] = S("Chest: make machine public") .. "\n\t"
+    formspec[#formspec + 1] = S("Battery: decrease power consumption") .. "\n\t"
+    formspec[#formspec + 1] = S("Red, Green and Blue energy crystals: decrease power consumption") .. "\n\t"
+    formspec[#formspec + 1] = S("Powerbanks Mk1 to Mk5: decrease power consumption") .. "\n\t"
+    formspec[#formspec + 1] = S("Control Logic units: auto-send output to tubes") .. "\n ]"
+    return table.concat(formspec, "")
+end
+
 local function make_registration_context(nodename, data)
     local colon, modname, name, def = technic.register_compat_v1_to_v2(nodename, data)
     local ltier = string.lower(def.tier)
