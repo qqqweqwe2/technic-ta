@@ -52,15 +52,15 @@ function technic.handle_machine_upgrades_limit(meta, EU_limit)
 			EU_upgrade = EU_upgrade + 4
 			charge_upgrade = charge_upgrade + 4
 		elseif upg_item == "powerbanks:powerbank_mk4" then -- 5M
-			EU_upgrade = EU_upgrade + 10
-			charge_upgrade = charge_upgrade + 8
+			EU_upgrade = EU_upgrade + 8
+			charge_upgrade = charge_upgrade + 7
 		elseif upg_item == "powerbanks:powerbank_mk5" then -- 10M
-			EU_upgrade = EU_upgrade + 20
-			charge_upgrade = charge_upgrade + 16
+			EU_upgrade = EU_upgrade + 12
+			charge_upgrade = charge_upgrade + 10
 		elseif upg_item == "default:mese_crystal" then
 			charge_upgrade = charge_upgrade + 1
 		elseif upg_item == "default:mese" then
-			charge_upgrade = charge_upgrade + 5
+			charge_upgrade = charge_upgrade + 2
 		end
 	end
 
@@ -153,14 +153,14 @@ function technic.send_items(pos, x_velocity, z_velocity, output_name, full,is_pe
 			if item0 then
 				if full then
 					local is_to_send = true
-					if is_percent then 
+					if is_percent then
 						wait = wait or meta:get_int(gold_unit.WAIT_NAME)
-						
+
 						local clock_last_send = meta:get_int("clock_last_send"..tostring(cursor))
 						game_time = game_time or minetest.get_gametime()
 
-						if wait ~= 0 and clock_last_send ~= 0 and game_time - clock_last_send >= wait + 20  then 
-							-- stack with old meta to clean 
+						if wait ~= 0 and clock_last_send ~= 0 and game_time - clock_last_send >= wait + 20  then
+							-- stack with old meta to clean
 							meta:set_int("clock_last_send"..tostring(cursor), game_time)
 						elseif wait == 0 or clock_last_send == 0 or game_time - clock_last_send < wait then
 							-- wait == 0 mean the  stack is never sent after x second
@@ -185,7 +185,7 @@ function technic.send_items(pos, x_velocity, z_velocity, output_name, full,is_pe
 							meta:set_int("output_taken", 1)
 						end
 						meta:set_int("output_round_robin", cursor)
-						return true					
+						return true
 					end
 				else
 					item0["count"] = "1"
@@ -256,7 +256,7 @@ function technic.handle_machine_pipeworks(pos, tube_upgrade, send_function)
 
 	local send_stack = false
 	local is_percent = 0
-	
+
 	if tube_upgrade > 100 then -- gold control unit to send less stack but bigger
 		is_percent = meta:get_int(gold_unit.PERCENT_NAME)
 		tube_upgrade = tube_upgrade % 100
