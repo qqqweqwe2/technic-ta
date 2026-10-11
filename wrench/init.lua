@@ -85,6 +85,7 @@ minetest.register_on_mods_loaded(function()
             newdef.groups.bag = 1
 			newdef.on_construct = nil
 			newdef.on_destruct = nil
+			newdef.on_rotate = false
 			newdef.after_place_node = restore
 			minetest.register_node(":"..get_pickup_name(name), newdef)
 		end
