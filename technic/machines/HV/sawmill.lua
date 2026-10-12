@@ -29,6 +29,7 @@ technic.register_base_machine("technic:hv_sawmill", {
 		},
 	},
 	tiles = { nil, nil, nil, nil, "_back", nil },
+	paramtype = "light",
 	upgrade = 1,
 	tube = 1,
 	tube_sides = { nil, true, true, true, true },

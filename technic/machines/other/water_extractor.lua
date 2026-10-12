@@ -191,6 +191,7 @@ minetest.register_node("technic:water_extractor", {
 	tiles = {"technic_water_extractor_top.png",  "technic_water_extractor_bottom.png",
 	         "technic_water_extractor_side.png", "technic_water_extractor_side.png",
 	         "technic_water_extractor_back.png", "technic_water_extractor_front.png"},
+	paramtype = "light",
 	paramtype2 = "facedir",
 	groups = {cracky=2},
 	legacy_facedir_simple = true,

@@ -124,6 +124,7 @@ minetest.register_node("technic:lv_lamp", {
 		"technic_lv_lamp_side.png",
 		"technic_lv_lamp_side.png"
 	},
+	paramtype = "light",
 	groups = {cracky = 2, technic_machine = 1, technic_lv = 1, pickaxey = 2},
 	_mcl_blast_resistance = 1,
 	_mcl_hardness = 0.8,

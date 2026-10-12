@@ -40,6 +40,7 @@ minetest.register_node("technic:lv_led", {
 	},
 	tiles = {"technic_lv_led.png"},
 	inventory_image = "technic_lv_led_inv.png",
+	paramtype = "light",
 	sunlight_propagates = true,
 	groups = {cracky = 2, technic_machine = 1, technic_lv = 1, pickaxey = 2},
 	_mcl_blast_resistance = 1,

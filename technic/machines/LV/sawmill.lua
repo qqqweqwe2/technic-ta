@@ -30,6 +30,7 @@ technic.register_base_machine("technic:lv_sawmill", {
 		},
 	},
 	tiles = { nil, nil, nil, nil, "_back", nil },
+	paramtype = "light",
 })
 
 minetest.after(0.1, function()

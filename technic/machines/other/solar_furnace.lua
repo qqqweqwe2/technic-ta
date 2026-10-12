@@ -159,6 +159,7 @@ minetest.register_node("technic:solar_furnace", {
 	tiles = {"technic_solar_furnace_top.png",  "technic_solar_furnace_bottom.png",
 	         "technic_solar_furnace_side.png", "technic_solar_furnace_side.png",
 	         "technic_solar_furnace_side.png", "technic_solar_furnace_side.png"},
+	paramtype = "light",
 	paramtype2 = "facedir",
 	groups = {cracky=2},
 	legacy_facedir_simple = true,
